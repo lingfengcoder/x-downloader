@@ -60,8 +60,6 @@
         <servlet-api.version>4.0.1</servlet-api.version>
         <httpclient.version>4.5.13</httpclient.version>
 
-        <xxl-job.version>2.3.0</xxl-job.version>
-
         <!--        <elasticsearch.version>7.15.0</elasticsearch.version>-->
     </properties>
 

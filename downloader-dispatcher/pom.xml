@@ -3,12 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>iptv-downloader</artifactId>
-        <groupId>com.pukka.iptv</groupId>
+        <groupId>lingfeng-biz</groupId>
+        <artifactId>x-downloader</artifactId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>downloader-dispatcher</artifactId>
+    <version>1.0.0</version>
     <description>
         下载组件任务调度器
         采用“多劳多得算法”，将任务合理均匀的分配给各个下载节点
@@ -22,22 +23,22 @@
     <dependencies>
         <dependency>
             <artifactId>downloader-log</artifactId>
-            <groupId>com.pukka.iptv</groupId>
+            <groupId>lingfeng-biz</groupId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
             <artifactId>downloader-nacos</artifactId>
-            <groupId>com.pukka.iptv</groupId>
+            <groupId>lingfeng-biz</groupId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
             <artifactId>downloader-data</artifactId>
-            <groupId>com.pukka.iptv</groupId>
+            <groupId>lingfeng-biz</groupId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
             <artifactId>downloader-mq</artifactId>
-            <groupId>com.pukka.iptv</groupId>
+            <groupId>lingfeng-biz</groupId>
             <version>1.0.0</version>
         </dependency>
     </dependencies>
