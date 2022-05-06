@@ -1,0 +1,4 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.pukka.iptv.downloader.mq.config.QueueConfig,\
+com.pukka.iptv.downloader.mq.config.RabbitMqConfig,\
+com.pukka.iptv.downloader.mq.pool.MqConnection

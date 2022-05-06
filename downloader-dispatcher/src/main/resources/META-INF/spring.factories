@@ -1,0 +1,7 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.pukka.iptv.downloader.config.DispatcherConfig,\
+com.pukka.iptv.downloader.dispatcher.DispatcherCenter,\
+com.pukka.iptv.downloader.task.NormalTaskHandler,\
+com.pukka.iptv.downloader.task.RetryTaskHandler,\
+com.pukka.iptv.downloader.policy.WorkMoreGetMorePolicy,\
+com.pukka.iptv.downloader.policy.TrackQueuePolicy

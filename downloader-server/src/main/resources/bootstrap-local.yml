@@ -1,0 +1,15 @@
+server:
+  port: 7002
+  #servlet:
+  #  context-path: /@project.artifactId@
+#nacos服务地址及账号密码
+nacos:
+#  server-addr: 172.25.224.107:8848
+  server-addr: localhost:8848
+  namespace: local
+  username: nacos
+  password: nacos
+  group: iptv
+  file-extension: yaml
+  # app-name: ${spring.application.name}
+hostname: ${HOSTNAME:logs}
