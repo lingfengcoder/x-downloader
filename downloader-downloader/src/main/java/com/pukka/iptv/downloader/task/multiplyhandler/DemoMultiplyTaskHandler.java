@@ -1,7 +1,7 @@
 package com.pukka.iptv.downloader.task.multiplyhandler;
 
 
-import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.pukka.iptv.downloader.config.NodeConfig;
 import com.pukka.iptv.downloader.model.DownloadTask;
 import com.pukka.iptv.downloader.task.downloader.AbstractDownloader;
@@ -12,8 +12,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Random;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -24,16 +26,25 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Description: 多任务处理器
  */
 @Slf4j
-@Component
-public class MultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> {
+public class DemoMultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> {
     //此处由于多个下载器是共享的 多任务处理器 所以在没有给各自分配 队列限制前，队列和锁也必须共享
     private final static ReentrantLock lock = new ReentrantLock();
+    private final static ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    private final static AtomicInteger limit = new AtomicInteger(1);
 
-    @Autowired
-    private NodeConfig config;
-
-    @Resource(name = "downloaderThreadPool")
-    private ThreadPoolTaskExecutor executor;
+    static {
+        ThreadFactory factory = ThreadFactoryBuilder.create()
+                .setNamePrefix("##downloader##").setDaemon(false)
+                .build();
+        executor.setKeepAliveSeconds(30);
+        executor.setThreadFactory(factory);
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(64);
+        executor.setQueueCapacity(0);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setAllowCoreThreadTimeOut(true);
+        executor.initialize();
+    }
 
     @Override
     protected ThreadPoolTaskExecutor getExecutor() {
@@ -48,27 +59,25 @@ public class MultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> 
 
     @Override
     protected boolean doWork(DownloadTask task) {
-        if (task == null) {
-            return false;
-        }
-        //选择下载器
-        Downloader<DownloadTask> downloader = AbstractDownloader.selectDownloader(task);
-        assert downloader != null;
-        downloader.preHandler(task);
+        log.info("taskId={} 开始执行", task.getTaskId());
         try {
-            downloader.download(task);
-        } catch (Exception e) {
+            TimeUnit.SECONDS.sleep(4);
+        } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
         }
-        downloader.postHandler(task);
+        log.info("taskId={} 执行完毕", task.getTaskId());
         return true;
     }
 
     @Override
     public int getLimit() {
-        return config.getConcurrentLimit();
+        return limit.get();
     }
 
+    @Override
+    public void setLimit(int x) {
+        limit.set(x);
+    }
 }
 
 

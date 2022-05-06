@@ -1,7 +1,6 @@
 package com.pukka.iptv.downloader.policy;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.clone.CloneSupport;
 import cn.hutool.core.util.RandomUtil;
 import com.pukka.iptv.downloader.mq.model.MsgTask;
 import com.pukka.iptv.downloader.mq.model.QueueInfo;
@@ -21,7 +20,7 @@ import java.util.Map;
 public class Test {
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws CloneNotSupportedException {
         //总任务数
         int maxTask = 10000;
         //队列数
@@ -39,7 +38,7 @@ public class Test {
 
     }
 
-    private static void test(DeliverPolicy<QueueInfo, MsgTask> policy, TestData data) {
+    private static void test(DeliverPolicy<QueueInfo, MsgTask> policy, TestData data)  {
         TestData testData = new TestData();
         BeanUtil.copyProperties(data, testData);
         long start = System.currentTimeMillis();
@@ -70,7 +69,6 @@ public class Test {
         //随机饥饿
         for (int i = 0; i < maxQueueLen; i++) {
             int random = RandomUtil.randomInt(perMaxTask);
-            random = perMaxTask;
             queues.add(new QueueInfo().queue("q" + i).remainCount(random).queueLen(perMaxTask - random));
         }
         return new TestData().setMaxQueueLen(maxQueueLen)

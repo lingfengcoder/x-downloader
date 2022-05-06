@@ -9,6 +9,7 @@ import com.pukka.iptv.downloader.mq.model.QueueInfo;
 import com.pukka.iptv.downloader.mq.pool.MqUtil;
 import com.pukka.iptv.downloader.mq.pool.RabbitMqPool;
 import com.pukka.iptv.downloader.nacos.NacosService;
+import com.pukka.iptv.downloader.policy.WorkMoreGetMorePlusPolicy;
 import com.pukka.iptv.downloader.policy.WorkMoreGetMorePolicy;
 import com.pukka.iptv.downloader.pool.Node;
 import com.rabbitmq.client.Channel;
@@ -33,12 +34,13 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 public class NormalTaskHandler extends AbsoluteTaskHandler {
 
-    @Resource(name = "normalSenderThreadPool")
-    private ExecutorService executor;
+    @Resource(name = "dispatcherSenderThreadPool")
+    private ThreadPoolTaskExecutor executor;
     @Autowired
     private DispatcherConfig config;
+    //更换基于数学模型的多劳多得算法
     @Autowired
-    private WorkMoreGetMorePolicy deliverPolicy;
+    private WorkMoreGetMorePlusPolicy deliverPolicy;
     @Autowired
     private QueueConfig queueConfig;
     @Autowired

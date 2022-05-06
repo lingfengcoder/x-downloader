@@ -4,7 +4,6 @@ server:
   #  context-path: /@project.artifactId@
 #nacos服务地址及账号密码
 nacos:
-#  server-addr: 172.25.224.107:8848
   server-addr: localhost:8848
   namespace: test
   username: nacos

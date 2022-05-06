@@ -60,13 +60,7 @@ public class AsyncDownloadProcess {
         task.setCallback(t -> listener.ackTask(msgTask));
         //设置后置处理器
         //添加下载任务
-        if (taskHandler.addTask(task)) {
-            //开启下载
-            if (!taskHandler.submitTask()) {
-                //添加失败，退回任务
-                listener.nackTask(msgTask);
-            }
-        } else {
+        if (!taskHandler.submitTask(task)) {
             //添加失败，退回任务
             listener.nackTask(msgTask);
             log.warn("消息添加失败！nack channel num={} tag={}", msgTask.getQueueChannel().channel().getChannelNumber(), msgTask.getDeliveryTag());
@@ -77,7 +71,7 @@ public class AsyncDownloadProcess {
     public int getAllDownloaderQueueLen() {
         //out 获取所有 内置的下载器
         //由于队列是共享的，所以找其中一个下载器即可
-        return taskHandler.queryTaskCount();
+        return taskHandler.getAliveTaskCount();
     }
 
 }

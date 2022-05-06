@@ -33,8 +33,8 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Component
 public class RetryTaskHandler extends AbsoluteTaskHandler {
-    @Resource(name = "retrySenderThreadPool")
-    private ExecutorService executor;
+    @Resource(name = "dispatcherSenderThreadPool")
+    private ThreadPoolTaskExecutor executor;
     @Autowired
     private QueueConfig queueConfig;
     @Autowired

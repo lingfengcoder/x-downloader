@@ -35,9 +35,9 @@ public class M3u8Util implements M3u8Api {
     }
 
     public static void main(String[] args) throws Exception {
-        String url="https://hls.videocc.net/4ffae39b72/7/4ffae39b727da1048bc3ea44e8108047_2.m3u8?pid=1639582156168X1131720&device=desktop";
+        String url="https://scpic.chinaz.net/files/pic/pic9/202203/hpic5190.jpg";
         String local="/data/m3u8/mashibing/";
-        String targetUrl="https://hls.videocc.net/4ffae39b72/7/4ffae39b727da1048bc3ea44e8108047_2.m3u8";
+        String targetUrl="https://scpic.chinaz.net/files/pic/pic9/202203/hpic5190.jpg";
         M3u8 m3u8=M3u8.generalM3u8(url,local,targetUrl);
         instance.downloadM3u8(m3u8);
     }

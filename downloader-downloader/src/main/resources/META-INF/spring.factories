@@ -5,6 +5,7 @@ com.pukka.iptv.downloader.config.FtpConfig,\
 com.pukka.iptv.downloader.task.multiplyhandler.MultiplyTaskHandler,\
 com.pukka.iptv.downloader.task.downloader.FtpDownloader,\
 com.pukka.iptv.downloader.task.downloader.M3u8Downloader,\
+com.pukka.iptv.downloader.task.downloader.HttpDownloader,\
 com.pukka.iptv.downloader.task.process.post.TaskStartedProcess,\
 com.pukka.iptv.downloader.task.process.post.FtpPostProcess,\
 com.pukka.iptv.downloader.task.process.post.M3u8PostProcess,\
@@ -12,5 +13,4 @@ com.pukka.iptv.downloader.task.process.post.TaskFailedProcess,\
 com.pukka.iptv.downloader.task.callback.FtpTaskNotify,\
 com.pukka.iptv.downloader.task.callback.M3u8TaskNotify,\
 com.pukka.iptv.downloader.task.process.AsyncDownloadProcess,\
-com.pukka.iptv.downloader.task.AutoNode,\
-com.pukka.iptv.downloader.callback.DelayQueueManager
+com.pukka.iptv.downloader.task.AutoNode

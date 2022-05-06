@@ -3,10 +3,13 @@ package com.pukka.iptv.downloader.task;
 import cn.hutool.core.date.SystemClock;
 import cn.hutool.core.thread.ThreadUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.pukka.iptv.downloader.config.NodeConfig;
 import com.pukka.iptv.downloader.model.DNode;
 import com.pukka.iptv.downloader.model.Downloading;
 import com.pukka.iptv.downloader.model.FileTask;
+import com.pukka.iptv.downloader.model.resp.R;
+import com.pukka.iptv.downloader.mq.config.RestHttp;
 import com.pukka.iptv.downloader.mq.consumer.MqConsumer;
 import com.pukka.iptv.downloader.mq.model.MsgTask;
 import com.pukka.iptv.downloader.mq.model.QueueChannel;
@@ -14,20 +17,28 @@ import com.pukka.iptv.downloader.mq.model.QueueInfo;
 import com.pukka.iptv.downloader.mq.pool.MqUtil;
 import com.pukka.iptv.downloader.mq.pool.RabbitMqPool;
 import com.pukka.iptv.downloader.nacos.listener.NacosNotify;
+import com.pukka.iptv.downloader.nacos.model.NacosHost;
 import com.pukka.iptv.downloader.task.process.AsyncDownloadProcess;
 import com.pukka.iptv.downloader.threadpool.ThreadUtils;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: wz
@@ -39,14 +50,14 @@ import java.util.concurrent.TimeUnit;
 @Order(2)
 public class Listener implements NacosNotify {
     @Resource(name = "downloaderScheduleThreadPool")
-    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    private ScheduledThreadPoolExecutor downloaderScheduleThreadPool;
     @Autowired
     private AutoNode autoDNode;
     @Autowired
     private NodeConfig nodeConfig;
     @Autowired
     private AsyncDownloadProcess asyncDownloadProcess;
-
+    private final List<MqConsumer> consumerList = new ArrayList<>();
 
     private static volatile DNode node;
 
@@ -72,7 +83,6 @@ public class Listener implements NacosNotify {
     public void configRefreshEvent() {
         if (nodeConfig.isEnable()) {
             //根据配置调整当前key对应的连接池限制
-            balanceListener();
             loopSchedule();
         }
         tmpIndexSchedule();
@@ -82,9 +92,9 @@ public class Listener implements NacosNotify {
     private void loopSchedule() {
         if (ThreadUtils.isNullOrDone(scheduledFuture)) {
             scheduledFuture =
-                    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
+                    downloaderScheduleThreadPool.scheduleAtFixedRate(() -> {
                         loopHandlerWithTimeout(BALANCE_TIMEOUT);
-                    }, 1, 1000, TimeUnit.MILLISECONDS);
+                    }, 1, 5000, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -105,6 +115,8 @@ public class Listener implements NacosNotify {
     //监听mq消息并执行下载任务
     public void loopHandlerWithTimeout(long timeout) {
         if (!nodeConfig.isEnable()) {
+            //关闭所有消费者
+            closeAllListener();
             return;
         }
         if (!loopInitNodeWithTimeout(timeout)) return;
@@ -112,47 +124,87 @@ public class Listener implements NacosNotify {
         loopBalanceConsumerWithTimeout(timeout);
     }
 
-    //根据配置调整当前key对应的连接池限制
-    private void balanceListener() {
-        QueueInfo queue = getConsumerQueue();
-        //连接池的连接数没有满足配额 或者 超时
-        Integer limit = nodeConfig.getChannelLimit();
-        //使用循环　在增加连接数的情况下，会在限定时间不停内向连接中申请新的连接
-        RabbitMqPool.RKey key = RabbitMqPool.RKey.newKey(queue, limit);
-        //此处使用真实的大小而不是配置大小，因为需要根据期望配置不停的去调整连接池，创建或者剔除新的监听者
-        int realSize = RabbitMqPool.me().getPoolRealBusyNodeSize(key);
-        //如果配置有调整
-        if (limit != realSize) {
-            //调整配置 主要作用在减少的情境下，在归还之后会进行关闭
-            RabbitMqPool.me().balanceKeyPoolSize(key);
-        }
-    }
-
     //带超时时间的调整
     private void loopBalanceConsumerWithTimeout(long timeout) {
         QueueInfo queue = getConsumerQueue();
         if (queue == null) return;
-        long time = SystemClock.now();
-        boolean notTimeout = true;
         //连接池的连接数没有满足配额 或者 超时
         Integer limit = nodeConfig.getChannelLimit();
-        RabbitMqPool.RKey key = RabbitMqPool.RKey.newKey(queue);
-        //读写分离线程不安全
-        //如果keyPool对应的连接数没有达到 配置的数量，则不停的提交新的消费者，形成新的连接
-        while (limit > RabbitMqPool.me().getPoolRealBusyNodeSize(key) && notTimeout) {
-            ThreadUtil.sleep(300);
-            addMqListener(queue);
-            notTimeout = notTimeout(time, timeout);
-        }
-        //如果没有超时，说明调整的配置都操作完毕了，可以取消定时任务了
-        if (notTimeout) {
-            ThreadUtils.cancelSchedule(scheduledFuture);
+        //通过mq-api 获取消费者数量
+        Integer consumerCount = MqUtil.getQueueConsumerCount(queue.queue());
+        //先清理已经死亡的消费者
+        clearDeathListener();
+        if (limit > consumerCount) {
+            addMqListener(queue, limit, timeout);
+        } else if (limit < consumerCount) {
+            //减少消费者
+            reduceListener(consumerCount - limit);
         }
     }
 
-    private void addMqListener(QueueInfo queue) {
+    private void closeAllListener() {
+        reduceListener(consumerList.size());
+    }
+
+    //补偿式 清除已经关闭的连接
+    private void clearDeathListener() {
+        Iterator<MqConsumer> iterator = consumerList.iterator();
+        while (iterator.hasNext()) {
+            MqConsumer next = iterator.next();
+            //被动关闭
+            Channel channel = next.channel();
+            if (channel == null) continue;
+            //主动关闭 如果channel 已经关闭了 直接移除就行
+            if (!channel.isOpen()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    //减少消费者
+    private void reduceListener(int delta) {
+        Iterator<MqConsumer> iterator = consumerList.iterator();
+        while (iterator.hasNext()) {
+            MqConsumer next = iterator.next();
+            //跳出循环
+            if (delta <= 0) {
+                break;
+            }
+            //被动关闭
+            Channel channel = next.channel();
+            if (channel == null) continue;
+            if (!next.closed()) {
+                if (channel.isOpen()) {
+                    //手动设置关闭标识，让线程自己关闭
+                    next.setCloseFlag();
+                }
+            } else {
+                //主动关闭 如果channel 已经关闭了 直接提出就行
+                if (!channel.isOpen()) {
+                    iterator.remove();
+                }
+            }
+            --delta;
+        }
+    }
+
+    //增加消费者
+    private void addMqListener(QueueInfo queue, int target, long timeout) {
+        long time = SystemClock.now();
+        boolean notTimeout = true;
+        while (target > consumerList.size() && notTimeout) {
+            MqConsumer mqConsumer = newMqListener(queue);
+            if (mqConsumer != null) {
+                consumerList.add(mqConsumer);
+            }
+            notTimeout = notTimeout(time, timeout);
+        }
+    }
+
+    private MqConsumer newMqListener(QueueInfo queue) {
         //线程池执行(此处线程池非必须，真正执行的是mq内部维护的线程池)
-        new MqConsumer().name("下载器")
+        MqConsumer mqConsumer = new MqConsumer();
+        boolean addOK = mqConsumer.name("下载器")
                 .mq(queue).autoAck(false)
                 .work(msgTask -> {
                     //如果下载节点被关闭，直接nack
@@ -166,6 +218,10 @@ public class Listener implements NacosNotify {
                     asyncDownloadProcess.download(msgTask, fileTask);
                     return true;
                 }).listen();
+        if (addOK) {
+            return mqConsumer;
+        }
+        return null;
     }
 
     //解析msg
@@ -186,7 +242,7 @@ public class Listener implements NacosNotify {
             //防止频繁nack造成资源浪费
             Thread.sleep(100);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error(e.getMessage(), e);
         }
         //节点没有初始化，需要退回消息
         QueueChannel queueChannel = msgTask.getQueueChannel();
@@ -222,7 +278,7 @@ public class Listener implements NacosNotify {
         if (tmpIndexScheduleFuture != null) {
             ThreadUtils.cancelSchedule(tmpIndexScheduleFuture);
         }
-        tmpIndexScheduleFuture = scheduledThreadPoolExecutor
+        tmpIndexScheduleFuture = downloaderScheduleThreadPool
                 .scheduleAtFixedRate(() -> Downloading.clearTmpIndex(liveTime),
                         1, liveTime, TimeUnit.MILLISECONDS);
     }

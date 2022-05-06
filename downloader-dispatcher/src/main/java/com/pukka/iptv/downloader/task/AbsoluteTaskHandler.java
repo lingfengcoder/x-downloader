@@ -17,6 +17,7 @@ import com.pukka.iptv.downloader.mq.producer.MqSender;
 import com.pukka.iptv.downloader.nacos.NacosService;
 import com.pukka.iptv.downloader.nacos.model.NacosHost;
 import com.pukka.iptv.downloader.policy.DeliverPolicy;
+import com.pukka.iptv.downloader.pool.Node;
 import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,9 +32,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +42,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public abstract class AbsoluteTaskHandler implements TaskHandler {
-
 
     //获取调度头部信息
     protected abstract MetaHead getMetaHead();
@@ -146,6 +144,10 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         Iterator<MsgTask> iterator = sendList.iterator();
         while (iterator.hasNext()) {
             MsgTask task = iterator.next();
+            //回退节点给连接池
+            Node<RabbitMqPool.RKey, Channel> node = task.getQueueChannel().node();
+            RabbitMqPool.me().back(node);
+            //回退消息给mq
             if (task.isRetryMsg()) {
                 iterator.remove();
                 //如果重试队列的数据 反给重试队列
@@ -200,9 +202,7 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         concurrentControl(head);
         //主动拉取数据
         //l.log(i -> i.info("{} 主动拉取数据", head.name()));
-        new MqPullConsumer()
-                .name(head.name())
-                .mq(queue)
+        new MqPullConsumer().name(head.name()).mq(queue)
                 .autoAck(false)//不自动ack
                 .autoBackChannel(false)//不自动连接节点归还
                 .work(msgTask -> {
@@ -213,6 +213,9 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
                         log.warn("没有添加成功的退回给mq");
                         Channel channel = msgTask.getQueueChannel().channel();
                         MqUtil.nack(channel, msgTask.getDeliveryTag());
+                        //把节点退给连接池
+                        Node<RabbitMqPool.RKey, Channel> node = msgTask.getQueueChannel().node();
+                        RabbitMqPool.me().back(node);
                     }
                     //判断是否触发 发送条件
                     // if (trigger(head)) refreshCacheAndSendTask(head);
@@ -267,7 +270,7 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
     //分发任务给指定队列
     private void sendTaskToExecuteQueue(Map<QueueInfo, List<MsgTask>> result, int sendCount, MetaHead head) {
         BizLog l = head.log();
-        ExecutorService senderExecutor = head.executorPool();
+        ThreadPoolTaskExecutor senderExecutor = head.executorPool();
         final CountDownLatch latch = new CountDownLatch(sendCount);
         //发送任务
         HashSet<QueueChannel> needBackList = new HashSet<>();
@@ -315,11 +318,11 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         } catch (Exception e) {
             l.log(i -> i.error(e.getMessage(), e));
         } finally {
-            resetSendTime(head);
             //归还连接
             for (QueueChannel item : needBackList) {
                 RabbitMqPool.me().back(item.node());
             }
+            resetSendTime(head);
             l.log(i -> i.info("本次数据全部发送完毕!"));
         }
     }
@@ -354,8 +357,8 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
                 for (QueueInfo queue : allQueues) {
                     //队列当前总数
                     int queueLen = queue.queueLen();
-                    if (queueLen == 0) {//如果API反馈任务是0 此时需要确认到底队列是不是0
-                        queueLen = MqUtil.getQueueLen(queue.queue());//通过mq获取队列任务数(有延时)
+                    if (queueLen == 0 || queueLen < (queueLenLimit + retryLenLimit)) {//如果API反馈任务是0 此时需要确认到底队列是不是0
+                        queueLen = Math.max(queueLen, MqUtil.getQueueLen(queue.queue()));//通过mq获取队列任务数(有延时)
                     }
                     //如果队列长度小于0说明获取队列信息失败，不进行分配任务
                     if (queueLen < 0) {

@@ -1,8 +1,10 @@
 package com.pukka.iptv.downloader.util;
 
 
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.pukka.iptv.downloader.config.NodeConfig;
+import com.pukka.iptv.downloader.model.Downloading;
 import com.pukka.iptv.downloader.model.FTPUrlInfo;
 import com.pukka.iptv.downloader.model.Proxy;
 
@@ -16,12 +18,16 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -41,7 +47,7 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
     //最大存活时间　5s
     private final static long MAX_LIVE_TIME = 5000;
     //最大等待队列长度
-    private final static int MAX_AWAIT_QUEUE_LENGTH = 1024;
+    private final static int MAX_AWAIT_QUEUE_LENGTH = 50;
 
     private static final FtpPool me = new FtpPool();
 
@@ -97,14 +103,18 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
 
     @Override
     //测试连接是否可用
-    public boolean nodeIsOpen(Node<FKey, FTPClient> node) {
+    public boolean nodeIsAlive(Node<FKey, FTPClient> node) {
         try {
-            node.getClient().getStatus();
+            if (node.getClient() != null) {
+                String status = node.getClient().getStatus();
+                log.info("nodeIsAlive==>  thread={} node={}  FTP node ", Thread.currentThread().getId(), node.hashCode());
+                return true;
+            }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
             return false;
         }
-        return true;
+        return false;
     }
 
     //刷新最大连接数
@@ -118,7 +128,7 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
     //动态调整每个key的limit
     public void refreshKeyLimit(int limit) {
         Set<FKey> keys = getAllKeys();
-        forceRefreshKeyPoolLimit(new ArrayList<>(keys), limit);
+        modifyKeyPoolLimit(new ArrayList<>(keys), limit);
     }
 
     @Override
@@ -136,7 +146,7 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
             int limit = bean.getConcurrentLimit() * 2;
             return limit <= 0 ? DEFAULT_KEY_POOL_SIZE : limit;
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            // log.error(e.getMessage(), e);
         }
         //默认
         return DEFAULT_KEY_POOL_SIZE;
@@ -151,12 +161,11 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
         //代理信息
         private Proxy proxy;
         //每个key同时最多有limit个连接
-        private int limit;
+        private int limit = limit();
 
         @Override
         public int getLimit() {
             //通过配置获取
-            this.limit = limit();
             return this.limit;
         }
 
@@ -232,34 +241,61 @@ public class FtpPool extends AbstractPool<FtpPool.FKey, FTPClient, Node<FtpPool.
 
 
     //test
-    public static void main(String[] args) {
-        int count = 100;
+    public static void main(String[] args) throws InterruptedException {
+        int count = 50;
         FTPUrlInfo ftpUrlInfo = new FTPUrlInfo()
-                .setIp("172.25.224.110").setPort(6069)
-                .setUserName("vstore").setPassword("iptv!#$vs");
-        FKey key = FKey.general(ftpUrlInfo).setLimit(5);
+                .setIp("192.168.4.41").setPort(21)
+                .setUserName("vstore").setPassword("vspukka");
+        FKey key = FKey.general(ftpUrlInfo).setLimit(10);
         for (int i = 0; i < count; i++) {
             if (i > 9) {
-                log.info("调整连接限制为10 ");
-                FtpPool.me().refreshKeyLimit(10);
+                FtpPool pool = FtpPool.me();
+                // pool.showRunStation(key);
+                FKey realKey = pool.findKeyFromPool(key);
+                if (realKey.getLimit() != 2) {
+                    TimeUnit.MILLISECONDS.sleep(200);
+                    log.info("调整连接限制为2 ");
+                    FtpPool.me().refreshKeyLimit(2);
+                }
             }
             new Thread(() -> {
                 FtpPool ftpPool = FtpPool.me();
                 Thread thread = Thread.currentThread();
-                // Node<Key, FTPClient> node = ftpPool.pick(key, 6000);
+                // Node<FKey, FTPClient> node = ftpPool.pickBlock(key, 2000);
+                // Node<FKey, FTPClient> node = ftpPool.pickNonBlock(key);
                 Node<FKey, FTPClient> node = ftpPool.pickBlock(key);
+                FtpPool pool = FtpPool.me();
+                // pool.showRunStation(key);
                 log.info("thread {} 号　获取了连接{}", thread.getId(), node.hashCode());
                 FTPClient client = node.getClient();
                 try {
-                    FTPFile[] ftpFiles = client.listFiles();
-                    Thread.sleep(1000);
+                    boolean b = client.changeWorkingDirectory("/Movie/wztest/demo_mv.mkv");
+                    b = client.changeWorkingDirectory("/Movie/wztest/");
+                    FTPFile ftpFile = client.mlistFile("demo_mv.mkv");
+                    if (ftpFile != null) {
+                        ftpFile.getSize();
+                        //file size
+                        // 下载使用二进制
+                        client.setFileType(FTP.BINARY_FILE_TYPE);
+                        // 完整下载
+                        client.retrieveFile(ftpFile.getName(), new FileOutputStream(new File("/data/demo.ftp")));
+
+                        client.changeWorkingDirectory("/");
+                        client.changeWorkingDirectory("/");
+                    } else {
+                        log.info("ftp源文件不存在");
+                    }
+                    Thread.sleep(RandomUtil.randomLong(500, 1000));
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("node id={} thread id={}  " + e.getMessage(), node.hashCode(), thread.getId(), e);
+//                    log.info("node id={}",node.hashCode());
                 }
                 log.info("thread {} 号　释放了连接 {}", thread.getId(), node.hashCode());
+                ftpPool.backClose(node);
                 ftpPool.back(node);
             }).start();
         }
     }
+
 
 }

@@ -27,9 +27,9 @@ public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<QueueInfo, MsgTa
         //没有剩余不执行
         if (ObjectUtil.isEmpty(queueRemain) || ObjectUtil.isEmpty(taskList)) return null;
         //打印空闲队列和数量
-        for (QueueInfo queue : queueRemain) {
-            //  log.info(queue.queue() + "空闲:{}", queue.remainCount());
-        }
+//        for (QueueInfo queue : queueRemain) {
+//             log.info(queue.queue() + "空闲:{}", queue.remainCount());
+//        }
         //平均分配任务
         Map<QueueInfo, List<MsgTask>> result = workMoreGetMoreDeliveryTask(taskList, queueRemain);
         if (!taskList.isEmpty()) {
@@ -54,7 +54,7 @@ public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<QueueInfo, MsgTa
         if (taskList.size() >= totalFree) {
             return directlyDeliver(taskList, queueRemain);
         } else {
-            return quanzhong(taskList, queueRemain);
+            return weightDeliver(taskList, queueRemain);
         }
     }
 
@@ -67,8 +67,8 @@ public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<QueueInfo, MsgTa
         return result;
     }
 
-    //权重分配算法
-    private static Map<QueueInfo, List<MsgTask>> quanzhong(List<MsgTask> taskList, List<QueueInfo> queueRemain) {
+    //如果任务不够分配，则进行权重算法
+    private static Map<QueueInfo, List<MsgTask>> weightDeliver(List<MsgTask> taskList, List<QueueInfo> queueRemain) {
         int base = taskList.size();
         //计算权重
         Map<QueueInfo, Integer> queueWithTaskCount = new HashMap<>();
@@ -106,7 +106,7 @@ public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<QueueInfo, MsgTa
             for (QueueInfo idx : overAvgList) {
                 queueRemain.remove(idx);
             }
-            //超过平均量的不参与分配，将其排除后再次进行递归分配
+            //排除超过平均量的，再次进行递归分配
             deliverWithDropBigger(base, queueRemain, result);
         } else {
             //分配

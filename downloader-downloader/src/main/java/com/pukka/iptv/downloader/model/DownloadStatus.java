@@ -6,5 +6,5 @@ package com.pukka.iptv.downloader.model;
  * @Description:
  */
 public enum DownloadStatus {
-    SUCCESS, DOWNLOADING, FAILED
+    START, DOWNLOADING, SUCCESS,FAILED
 }

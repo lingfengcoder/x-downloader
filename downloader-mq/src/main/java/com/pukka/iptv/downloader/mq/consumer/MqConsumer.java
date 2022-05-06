@@ -1,8 +1,10 @@
 package com.pukka.iptv.downloader.mq.consumer;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.pukka.iptv.downloader.mq.model.MsgTask;
 import com.pukka.iptv.downloader.mq.model.QueueChannel;
 import com.pukka.iptv.downloader.mq.model.QueueInfo;
+import com.pukka.iptv.downloader.mq.pool.MqConnection;
 import com.pukka.iptv.downloader.mq.pool.MqUtil;
 import com.pukka.iptv.downloader.mq.pool.RabbitMqPool;
 import com.pukka.iptv.downloader.pool.Node;
@@ -28,10 +30,22 @@ public class MqConsumer {
     private String name;
     private String id;
     private QueueInfo mq;
+    private Channel channel;
     private ConsumerNotify work;
     private ConsumerAck ack;
+    //是否是关闭状态
+    private volatile boolean closed = false;
     //是否自动ack
     private boolean autoAck = true;
+
+    public void setCloseFlag() {
+        this.closed = true;
+    }
+
+    public boolean isClosed() {
+        return this.closed;
+    }
+
 
     private void makeInfo() {
         Thread thread = Thread.currentThread();
@@ -39,20 +53,24 @@ public class MqConsumer {
         //log.info("[MqConsumer   id:{} name:{}] do work ", id, name);
     }
 
-    private Node<RabbitMqPool.RKey, Channel> getMqChannel() {
-        RabbitMqPool.RKey key = RabbitMqPool.RKey.newKey(mq.exchange(null).routeKey(null));
-        //采用不阻塞的方式获取
-        return RabbitMqPool.me().pickNonBlock(key);
+    private Channel getMqChannel() {
+        try {
+            MqConnection mqBean = SpringUtil.getBean(MqConnection.class);
+            Connection connection = mqBean.getConnection();
+            return connection.createChannel();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void listen() {
+
+    public boolean listen() {
         //设置work信息
         makeInfo();
         try {
-            Node<RabbitMqPool.RKey, Channel> node = getMqChannel();
-            if (node == null) return;
-            Channel channel = node.getClient();
-            if (channel == null) return;
+            Channel channel = getMqChannel();
+            if (channel == null) return false;
+            this.channel = channel;
             //每次只拉取一条，用于配合连接池线程实现，动态调配
             channel.basicQos(0, 10, false);
             String s = channel.basicConsume(mq.queue(), false, new Consumer() {
@@ -61,7 +79,7 @@ public class MqConsumer {
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
                     try {
                         //创建队列和管道的绑定信息
-                        QueueChannel queueChannel = new QueueChannel(mq, channel, node);
+                        QueueChannel queueChannel = new QueueChannel(mq, channel, null);
                         //Thread thread = Thread.currentThread();
                         //log.warn("[handleDelivery] consumer info my thread is {}", thread.getId() + thread.getName() + thread.getThreadGroup());
                         MsgTask msgTask = new MsgTask();
@@ -87,10 +105,9 @@ public class MqConsumer {
                             } catch (Exception e) {
                                 log.error(e.getMessage(), e);
                             }//此处存在，主动关闭channel时，可能已经有消息进来了
-                            //如果需要调整根据最大并发数被动回收线程池
-                            RabbitMqPool.RKey key = node.getKey();
-                            RabbitMqPool.me().closeNodeIfNecessary(key, node);
-                            //mq的连接 因为是消费者不进行归还 防止消费者被重写 RabbitMqPool.me().back(node);
+                            if (closed) {
+                                MqUtil.closeChannel(channel);
+                            }
                         }
                     }
                 }
@@ -110,7 +127,7 @@ public class MqConsumer {
                     log.info("handleCancel-->{}", s);
                     //如果有异常发生需要从连接池中去除
                     //MqUtil.closeChannel(channel);
-                    RabbitMqPool.me().back(node);
+                    // RabbitMqPool.me().back(node);
                 }
 
                 @Override
@@ -119,7 +136,7 @@ public class MqConsumer {
                     log.error("consumer close error!");
                     //如果有异常发生需要从连接池中去除
                     // MqUtil.closeChannel(channel);
-                    RabbitMqPool.me().back(node);
+                    // RabbitMqPool.me().back(node);
                 }
 
                 @Override
@@ -127,9 +144,10 @@ public class MqConsumer {
                     log.info("handleRecoverOk-->{}", s);
                 }
             });
-            log.info("提交消费者线程结束{}", mq);
+
         } catch (IOException e) {
             log.error(e.getMessage(), e);
         }
+        return true;
     }
 }

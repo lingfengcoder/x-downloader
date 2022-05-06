@@ -169,7 +169,7 @@ public abstract class AbsolutePostProcess {
         File file = new File(path);
         if (file.exists()) {
             File parent = file.getParentFile();
-            if (parent.getAbsolutePath().equalsIgnoreCase(File.separator)) {
+            if (parent==null||parent.getAbsolutePath().equalsIgnoreCase(File.separator)) {
                 return null;
             }
             if (parent.exists()) {
