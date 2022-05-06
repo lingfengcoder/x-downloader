@@ -89,6 +89,7 @@ public class FTPUtils {
             try {
                 client.logout();
                 client.disconnect();
+                log.info("FTP 退出成功！");
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
             }
@@ -107,7 +108,7 @@ public class FTPUtils {
     }
 
     /**
-     * @param [ftpClient:FTP客户端, sourceFtpUrl:源地址, targetFilePath:本地地址,  sourceInfo源文件信息]
+     * @param :FTP客户端, sourceFtpUrl:源地址, targetFilePath:本地地址,  sourceInfo源文件信息
      * @return void
      * @Description:FTP下载
      * @author wz
@@ -303,7 +304,13 @@ public class FTPUtils {
         if (ftpClient == null) return null;
         if (ftpClient.changeWorkingDirectory(info.getPath())) {
             //优先通过mlist命令获取文件
-            FTPFile file = ftpClient.mlistFile(info.getFileName());
+            FTPFile file = null;
+            try {
+                file = ftpClient.mlistFile(info.getFileName());
+            } catch (Exception e) {
+                log.error("ReplyString= {}", ftpClient.getReplyString());
+                log.error(e.getMessage(), e);
+            }
             if (file != null) {
                 if (file.isFile()) return file;
             } else {

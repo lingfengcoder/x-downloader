@@ -29,7 +29,7 @@ public interface Pool<K extends Key, N, C> {
     void scheduleClear();
 
     //测试连接是否可用
-    boolean nodeIsOpen(N n);
+    boolean nodeIsAlive(N n);
 
     //关闭连接
     void closePool();

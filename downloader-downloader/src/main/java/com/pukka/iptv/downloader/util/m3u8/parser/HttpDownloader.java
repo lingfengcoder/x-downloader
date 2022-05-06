@@ -42,7 +42,12 @@ class HttpDownloader extends M3u8AbsDownloader {
         Assert.notNull(file);
         Assert.notNull(url);
         //获取头部信息
-        ConnectHead head = M3u8Parser.getCurrentHead();
+        ConnectHead head = new ConnectHead();
+        if (M3u8Parser.getCurrentHead() == null) {
+            head = HttpParser.getCurrentHead();
+        } else {
+            head = M3u8Parser.getCurrentHead();
+        }
         Proxy proxy = head.proxy();
         RestTemplate httpClient = proxy == null ? getHttp() : getProxyHttp(proxy);
         Assert.notNull(httpClient);

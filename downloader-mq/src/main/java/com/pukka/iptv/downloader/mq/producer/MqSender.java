@@ -20,8 +20,7 @@ import java.nio.charset.StandardCharsets;
  */
 @Slf4j
 public class MqSender {
-    //默认发送超时时间
-    private final static long DEFAULT_SEND_TIMEOUT = 5000;
+
 
     //阻塞式发送消息
     public static void sendMsgWaitFor(String msg, QueueInfo info, long timeout, SendWaitCallBack waitCallBack) throws Exception {
@@ -55,7 +54,7 @@ public class MqSender {
 
     //阻塞式发送消息
     public static void sendMsgWaitFor(String msg, QueueInfo info, SendWaitCallBack waitCallBack) throws Exception {
-        sendMsgWaitFor(msg, info, DEFAULT_SEND_TIMEOUT, waitCallBack);
+        sendMsgWaitFor(msg, info, 0, waitCallBack);
     }
 
     /**

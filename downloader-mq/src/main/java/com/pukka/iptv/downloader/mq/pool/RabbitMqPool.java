@@ -7,8 +7,10 @@ import com.pukka.iptv.downloader.pool.AbstractPool;
 import com.pukka.iptv.downloader.pool.Key;
 import com.pukka.iptv.downloader.pool.Node;
 import com.pukka.iptv.downloader.pool.PoolConfig;
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.Consumer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -22,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 import static com.pukka.iptv.downloader.mq.pool.MqConnection.*;
 
@@ -37,7 +38,7 @@ public class RabbitMqPool extends AbstractPool<RabbitMqPool.RKey, Channel, Node<
     private final static Map<RKey, Collection<Node<RKey, Channel>>> pool = new HashMap<>();
     //并发锁
     private final static ReentrantLock lock = new ReentrantLock(true);
-    //每个FTP　核心限制数
+    //核心限制数
     private final static int PER_CORE_LIMIT = 5;
     //池子最大限制数
     private final static int MAX_LIMIT = NO_LIMIT;
@@ -63,7 +64,10 @@ public class RabbitMqPool extends AbstractPool<RabbitMqPool.RKey, Channel, Node<
     @Override
     protected PoolConfig<RabbitMqPool.RKey, Channel, Node<RabbitMqPool.RKey, Channel>> getPoolConfig() {
         return new PoolConfig<RabbitMqPool.RKey, Channel, Node<RabbitMqPool.RKey, Channel>>()
-                .setPool(pool).setLock(lock).setEnableSchedule(false)
+                .setName("biz-rabbitmq-pool")
+                .setPool(pool).setLock(lock)
+                //不允许空闲超时自动关闭
+                .setEnableSchedule(true)
                 .setMaxFreeNodeLiveTime(MAX_LIVE_TIME)
                 .setMaxLiveNodeLimit(MAX_LIMIT)
                 .setAwaitQueueLength(MAX_AWAIT_QUEUE_LENGTH);
@@ -96,18 +100,23 @@ public class RabbitMqPool extends AbstractPool<RabbitMqPool.RKey, Channel, Node<
         Channel channel = node.getClient();
         return MqUtil.closeChannel(channel);
     }
+    {
+        MqConnection mqBean = SpringUtil.getBean(MqConnection.class);
+        connection = mqBean.getConnection();
 
+    }
 
     @Override
     //测试连接是否可用
-    public boolean nodeIsOpen(Node<RKey, Channel> node) {
+    public boolean nodeIsAlive(Node<RKey, Channel> node) {
         try {
             Thread.sleep(200);
-        } catch (InterruptedException e) {
+            Channel client = node.getClient();
+            return client.isOpen();
+        } catch (Exception e) {
             log.error(e.getMessage());
         }
-        Channel client = node.getClient();
-        return client.isOpen();
+        return false;
     }
 
     //刷新池子中最大的连接数
@@ -125,15 +134,15 @@ public class RabbitMqPool extends AbstractPool<RabbitMqPool.RKey, Channel, Node<
         //如果新调整的连接数和原本配置的不同，需要进行调整
         if (key.getLimit() != realSize) {
             //设置单key的连接数配置
-            super.forceRefreshKeyPoolLimit(key, key.getLimit());
+            super.modifyKeyPoolLimit(key, key.getLimit());
             //主动调节
             super.balanceKeyPool(key);
         }
     }
 
     //如果连接池的limit有调整，检查是否有必要去关闭指定连接
-    public void closeNodeIfNecessary(RKey key, Node<RKey, Channel> node) {
-        super.closeNodeIfNecessary(key, node);
+    public void proActiveReleaseNode(RKey key, Node<RKey, Channel> node) {
+        super.tryReleaseNode(key, node);
     }
 
     @Setter

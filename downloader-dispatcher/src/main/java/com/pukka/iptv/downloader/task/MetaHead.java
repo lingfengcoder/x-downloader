@@ -43,7 +43,7 @@ public class MetaHead {
     //策略类
     private DeliverPolicy<QueueInfo, MsgTask> deliverPolicy;
     //执行器线程池
-    private ExecutorService executorPool;
+    private ThreadPoolTaskExecutor executorPool;
     //上一次优先级高的队列 0:下载队列 1:重试队列
     private int lastDice;
     //一些配置

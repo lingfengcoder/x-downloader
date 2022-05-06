@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 
 /**
  * @Author: wz
@@ -78,6 +77,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     @Getter
     private static class ConditionNode {
         private Condition condition;
+
         //private int waiterCount = 0;
         private LinkedList<String> queue = new LinkedList<>();
 
@@ -87,6 +87,10 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
 
         public void addWaiter(Thread thread) {
             queue.add(parseWaiterName(thread));
+        }
+
+        public boolean removeFromQueue(Thread thread) {
+            return queue.remove(parseWaiterName(thread));
         }
 
         public static String parseWaiterName(Thread thread) {
@@ -112,6 +116,15 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         scheduledFuture = executor.scheduleAtFixedRate(this::scheduleClear, 2, 1, TimeUnit.SECONDS);
     }
 
+    private boolean stateAccess() {
+        if (!getConfig().getEnable()) {
+            log.warn("{}连接池已经关闭", getConfig().getName());
+            return false;
+        }
+        return true;
+    }
+
+
     /**
      * @param k, timeout
      * @return N
@@ -126,24 +139,22 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         N node = null;
         boolean IOE = false;
         K realKey = null;
+        Collection<N> pool = null;
         try {
+            if (!stateAccess()) return null;
+            //抢锁
             if (timeout > 0) {
                 if (!lock.tryLock(timeout, TimeUnit.MILLISECONDS)) {
-                    //lock = null;
+                    log.error("请求获取锁超时{}", k.getName());
                     return null;
                 }
             } else {
                 lock.lock();
             }
-            if (!getConfig().getEnable()) {
-                log.warn("连接池已经关闭");
-                return null;
-            }
-            Map<K, Collection<N>> pool = getConfig().getPool();
-            realKey = generalRealKey(k);
-            int limit = realKey.getLimit();
-            Collection<N> list = pool.computeIfAbsent(realKey, i -> new ArrayList<>(limit));
-            node = getNodeFromPool(realKey, list);
+            realKey = getOrGeneralRealKey(k);
+            pool = getOrGeneralPool(realKey);
+            //从池子中获取一个空闲节点
+            node = getNodeFromPool(realKey, pool);
         } catch (InterruptedException | IOException e) {
             log.error(e.getMessage(), e);
             IOE = true;
@@ -158,7 +169,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                         boolean need = needJoinWaitQueue(realKey);
                         if (need) {
                             Thread thread = Thread.currentThread();
-                            log.info("线程:{}获取到了node 但优先给了等待队列", thread.getId());
+                            log.info("线程:{}获取到了node 但优先给了等待队列", getThreadInfo(thread));
                             //唤醒等待队列的线程
                             notifyWaiter(realKey, node);
                             //自己加入等待队列
@@ -166,12 +177,32 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                         }
                     }
                 }
+                if (node != null) {
+                    //测试节点是否已经关闭
+                    if (!testNodeIsAlive(node)) {
+                        log.info("{}获取到节点,但节点已经不可用,再次获取", getThreadInfo(Thread.currentThread()));
+                        //关闭节点
+                        releaseNode(node);
+                        //从池中剔除节点
+                        if (pool != null) {
+                            pool.remove(node);
+                            node.clear();
+                        }
+                        //如果节点已经关闭，再次进入循环
+                        node = pickBlock(k, timeout);
+                    }
+                }
             } finally {
+                if (node != null) {
+                    //设置node的持有者
+                    holdNode(node);
+                }
                 unlock(lock);
             }
         }
         return node;
     }
+
 
     private void unlock(Lock lock) {
         try {
@@ -181,6 +212,17 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    /**
+     * @Description 从获取或者生成池子
+     * @author wz
+     */
+    private Collection<N> getOrGeneralPool(K realKey) {
+        //获取或者初始化池子
+        Map<K, Collection<N>> pool = getConfig().getPool();
+        int limit = realKey.getLimit() == NO_LIMIT ? 0 : realKey.getLimit();
+        return pool.computeIfAbsent(realKey, i -> new ArrayList<>(limit));
     }
 
     //判断是否需要加入等待队列
@@ -210,24 +252,31 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                 } else {
                     conditionNode.getCondition().await();
                 }
-                sot = ConditionNode.parseWaiterName(Thread.currentThread());
+                Thread thread = Thread.currentThread();
+                sot = ConditionNode.parseWaiterName(thread);
                 //利用volatile唤醒之后再去获取一次
+                //conditionNode.getQueue() 在唤醒的时候会poll，等待队列就减少了
+                log.info("thread={} 被唤醒", thread);
                 return awaitDataStore.get(sot);
             } else {
-                log.error("等待队列已满maxQueueLen=" + maxQueueLen);
+                log.error("等待队列已满 maxQueueLen={} key={}", maxQueueLen, realKey.getName());
             }
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
+            //如果线程等待被中断了，需要从队列中移除
+            ConditionNode conditionNode = awaitQueue.get(realKey);
+            if (conditionNode != null) {
+                conditionNode.removeFromQueue(Thread.currentThread());
+            }
         } finally {
-            //help gc
-            awaitDataStore.remove(sot);
+            if (sot != null) {
+                awaitDataStore.remove(sot);
+            }
         }
         return null;
     }
 
     /**
-     * @param key
-     * @return N
      * @Description 阻塞式从池中获取连接，如果获取不到将阻塞线程，等到其他线程释放后会唤醒
      * @author wz
      * @date 2022/1/5 11:20
@@ -238,18 +287,12 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     }
 
     //生成真正的key
-    private K generalRealKey(K k) {
-        K realKey = null;
-        Map<K, Collection<N>> pool = getConfig().getPool();
-        if (pool.containsKey(k)) {
-            realKey = findKeyFromPool(k);
-        }
+    private K getOrGeneralRealKey(K k) {
+        K realKey = findKeyFromPool(k);
         return realKey == null ? k.cloneMe() : realKey;
     }
 
     /**
-     * @param k
-     * @return N
      * @Description 不带阻塞的获取连接，在抢到锁后如果获取不到连接就直接返回
      * @author wz
      * @date 2022/1/5 11:26
@@ -261,46 +304,51 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         K realKey = null;
         try {
             lock.lock();
-            Map<K, Collection<N>> pool = getConfig().getPool();
-            realKey = generalRealKey(k);
-            int limit = realKey.getLimit();
-            Collection<N> list = pool.computeIfAbsent(realKey, i -> new ArrayList<>(limit == NO_LIMIT ? 1 : limit));
-            node = getNodeFromPool(realKey, list);
+            if (!stateAccess()) return null;
+            realKey = getOrGeneralRealKey(k);
+            Collection<N> pool = getOrGeneralPool(realKey);
+            node = getNodeFromPool(realKey, pool);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
-            lock.unlock();
+            if (node != null) {
+                //如果可以使用
+                if (testNodeIsAlive(node)) {
+                    holdNode(node);
+                } else {
+                    //递归再次获取 两种结果 1.获取到可用的node 2.获取到null
+                    node = pickNonBlock(k);
+                }
+            }
+            unlock(lock);
         }
         //log.info("从池中获取的node={}", node);
         return node;
     }
 
+
     //从线程池中获取一个连接 //todo 可以在此处控制最大连接数
     private N getNodeFromPool(K key, Collection<N> list) throws IOException {
-        //如果连接池已经关闭则不创建连接
-        if (!getConfig().getEnable()) return null;
-        //从池中找到空闲的连接并测试连接是否开启
-        Iterator<N> iterator = list.iterator();
-        while (iterator.hasNext()) {
-            N node = iterator.next();
-            if (node.free) {
-                //提供连接节点前先测试一下是否时开启状态
-                if (testNodeIsOpen(node)) {
-                    return node;
-                } else {
-                    if (safeCloseNode(node))
-                        iterator.remove();
-                }
-            } else if (node.close) {
-                //如果连接还是开启的状态，则尝试去关闭
-                if (testNodeIsOpen(node)) {
-                    if (safeCloseNode(node)) iterator.remove();
-                } else {
-                    //如果连接已经关闭，则直接从连接池中移除即可
-                    iterator.remove();
+        N node = findOneFromPool(list);
+        //如果在现有的池子中找不到一个空闲的节点，则生成新的节点
+        if (node == null) {
+            //判断是否所有节点数达到阈值
+            boolean maxAccess = maxPoolLimitAccess();
+            //判断单个key的节点数是否达到阈值
+            boolean keyLimitAccess = keyLimitAccess(key, list);
+            if (maxAccess && keyLimitAccess) {
+                //主动从子类中生成一个新的连接，并加入池中
+                node = generalConnect(key);
+                if (node != null) {
+                    list.add(node);
                 }
             }
         }
+        return node;
+    }
+
+    //最多连接数判断
+    private boolean maxPoolLimitAccess() {
         //检测总连接数
         int max = getConfig().getMaxLiveNodeLimit();
         if (max <= 0 && max != NO_LIMIT) {
@@ -310,28 +358,50 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         int allNodes = allNodesCount();
         if (allNodes > max && max != NO_LIMIT) {
             log.error("连接池到达了最大值:{} 在旧的连接释放之前，不能再加入新的连接了！", max);
-            return null;
+            return false;
         }
-        int perLimit = key.getLimit();
-        //如果连接池还没满 perLimit<0 不对单个节点进行限制
-        //如果动态缩小了keyPool连接池，则当前线程可能会获取不到新的连接
-        if (perLimit >= 0 && list.size() >= perLimit) {
-            log.error("当前节点key：{}到达了最大值:{} 在旧的连接释放之前，不能再加入新的连接了！", key.getName(), perLimit);
-            return null;
-        }
-        //主动获取一个连接
-        N node = generalConnect(key);
-        if (node != null) {
-            list.add(node);
-        }
-        return node;
+        return true;
     }
 
-    private boolean testNodeIsOpen(N node) {
+    //单个key允许存放的最大连接数
+    private boolean keyLimitAccess(K realKey, Collection<N> list) {
+        int limit = realKey.getLimit();
+        //如果连接池还没满 perLimit<0 不对单个节点进行限制
+        //如果动态缩小了keyPool连接池，则当前线程可能会获取不到新的连接
+        if (limit >= 0 && list.size() >= limit) {
+            log.error("当前节点key：{}到达了最大值:{} 在旧的连接释放之前，不能再加入新的连接了！", realKey.getName(), limit);
+            return false;
+        }
+        return true;
+    }
+
+    private N findOneFromPool(Collection<N> list) {
+        //从池中找到空闲的连接并测试连接是否开启
+        Iterator<N> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            N node = iterator.next();
+            if (node.free && !node.close) {
+                //改成在外部测试可用性
+                return node;
+            } else if (node.close) {
+                //如果连接还是开启的状态，则尝试去关闭
+                if (testNodeIsAlive(node)) {
+                    if (releaseNode(node)) iterator.remove();
+                } else {
+                    //如果连接已经关闭，则直接从连接池中移除即可
+                    iterator.remove();
+                }
+            }
+        }
+        return null;
+    }
+
+    //测试节点是否仍然开启的状态
+    private boolean testNodeIsAlive(N node) {
         try {
             //如果连接已经关闭，则进行剔除
             //连接是开启的就直接返回
-            return nodeIsOpen(node);
+            return nodeIsAlive(node);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -339,9 +409,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     }
 
     /**
-     * @param node
-     * @return void
-     * @Description 归还一个连接;如果有等待队列,唤醒队列等待时间最久的线程并分配连接
+     * @Description 归还一个连接;如果有等待队列,唤醒队列等待时间最久的线程并分配连接 支持重复归还
      * @author wz
      * @date 2022/1/5 11:28
      */
@@ -353,6 +421,10 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         boolean open;
         try {
             lock.lock();
+            if (!holderCharge(node)) {
+                node = null;
+                return;
+            }
             open = !node.close;
             if (open) {
                 node.free = (true);
@@ -365,18 +437,26 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                 }
             }
             if (node.close) {
-                //如果节点设置了关闭状态，但并未真正关闭
-                if (testNodeIsOpen(node)) {
+                //在holder不为空的情况下 如果节点设置了关闭状态，但并未真正关闭
+                if (node.holder != null && testNodeIsAlive(node)) {
                     safeCloseNode(node);//尝试再次关闭一次
                 }
                 //如果节点已经关闭，则需要剔除
                 Map<K, Collection<N>> pool = this.getConfig().getPool();
                 Collection<N> list = pool.get(key);
                 list.remove(node);
+                node.clear();
                 node = null;
             }
         } finally {
             try {
+                // 在线程第一次归还的时候，清除线程持有者
+                if (node != null && node.holder != null) {
+                    node.holder.clear();
+                    node.holder = null;
+                }
+                //此处如果node已经关闭或者node已经为null，也要去尝试唤醒
+                //在notifyWaiter内部会尝试给等待的线程 寻找新的有效node
                 notifyWaiter(key, node);
             } finally {
                 lock.unlock();
@@ -384,9 +464,22 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         }
     }
 
+    //判断 线程的持有者
+    private boolean holderCharge(N node) {
+        if (node.holder != null) {
+            Thread holder = node.holder.get();
+            Thread thread = Thread.currentThread();
+            if (holder == null || !holder.equals(thread)) {
+                log.info("holder不同 不进行重复归还 holder={} current={}", getThreadInfo(holder), getThreadInfo(thread));
+                //如果没有持有者
+                //或者持有者非当前的持有者(重复归还的情况下，第一次归还后已经被其他线程获取了，此时再次归还将不做处理)
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
-     * @param node
-     * @return void
      * @Description 返回并关闭节点
      * @author wz
      * @date 2022/1/5 11:28
@@ -398,20 +491,28 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         K key = node.key;
         try {
             lock.lock();
-            node.close = true;
-            node.free = false;
-            safeCloseNode(node);//尝试再次关闭一次
+            //node持有者判断
+            if (!holderCharge(node)) {
+                node = null;
+                return;
+            }
+            releaseNode(node);
             //如果节点已经关闭，则需要剔除
             Map<K, Collection<N>> pool = this.getConfig().getPool();
             Collection<N> list = pool.get(key);
-            list.remove(node);
-            node = null;
+            if (list != null) {
+                list.remove(node);
+            }
+            node.clear();
         } finally {
-            lock.unlock();
+            unlock(lock);
         }
     }
 
-    //唤醒等待队列的线程
+    /**
+     * @Description 唤醒等待队列(FIFO)中等待获取节点的线程, 如果没有任何等待的线程，则根据配置情况尝试释放node
+     * @author wz
+     */
     private void notifyWaiter(K key, N node) {
         //如果有等待队列,唤醒队列等待时间最久的线程并把连接给他
         boolean hasWaiter = false;//是否有线程在等待获取当前的连接节点
@@ -453,6 +554,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                         //方式3：通过唤醒后的线程再次主动获取
                     }
                 } else {
+                    // releaseNode(node);
                     log.info("没有等待{}的线程了", key.getName());
                 }
             }
@@ -461,7 +563,23 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         // 如果需要可能会剔除当前连接节点
         //如果有线程在等待当前连接，优先线程使用在进行连接池调整
         if (node != null && !hasWaiter) {
-            closeNodeIfNecessary(key, node);
+            tryReleaseNode(key, node);
+        }
+    }
+
+
+    //如果key对应的连接都被清空了，则将key也剔除
+    private void clearNullNodeKey(Map.Entry<K, Collection<N>> item) {
+        Collection<N> value = item.getValue();
+        if (value.isEmpty()) {
+            K key = item.getKey();
+            ConditionNode conditionNode = awaitQueue.get(key);
+            //并且没有任何等待连接的线程了
+            if (conditionNode != null && conditionNode.getQueue().isEmpty()) {
+                awaitQueue.remove(key);
+                Map<K, Collection<N>> pool = this.getConfig().getPool();
+                pool.remove(key);
+            }
         }
     }
 
@@ -486,6 +604,9 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
             long now = new Date().getTime();
             for (Map.Entry<K, Collection<N>> item : pool.entrySet()) {
                 Collection<N> value = item.getValue();
+                //如果key对应的连接都被清空了，则将key也剔除
+                clearNullNodeKey(item);
+                //
                 Iterator<N> iterator = value.iterator();
                 while (iterator.hasNext()) {
                     N node = iterator.next();
@@ -498,7 +619,9 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                     }
                     //尝试关闭连接，如果关闭3次以上还没有关闭成功，则直接从池中剔除
                     if (node.close) {
+                        node.free = false;
                         String name = getConfig().getName();
+                        showRunStation(node.key);
                         log.info("{}  连接池 主动关闭空闲连接 {} ", name, node.getKey());
                         boolean down = safeCloseNode(node);
                         if (down || node.tryCloseCount > 3) {
@@ -515,8 +638,6 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     }
 
     /**
-     * @param config
-     * @return void
      * @Description 刷新连接池的配置
      * @author wz
      * @date 2022/1/5 11:29
@@ -535,8 +656,11 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         }
     }
 
-    //获取真实KEY
-    private K findKeyFromPool(K key) {
+    /**
+     * @Description 获取在连接池中真实的KEY
+     * @author wz
+     */
+    public K findKeyFromPool(K key) {
         ReentrantLock lock = getConfig().getLock();
         try {
             lock.lock();
@@ -548,7 +672,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
                 }
             }
         } finally {
-            lock.unlock();
+            unlock(lock);
         }
         return null;
     }
@@ -563,6 +687,34 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
             return list == null ? 0 : list.size();
         } finally {
             lock.unlock();
+        }
+    }
+
+    //获取key的等待线程数
+    public int getKeyWaiter(K key) {
+        ReentrantLock lock = getConfig().getLock();
+        try {
+            lock.lock();
+            K realKey = findKeyFromPool(key);
+            ConditionNode conditionNode = awaitQueue.get(realKey);
+            if (conditionNode != null) {
+                return conditionNode.getQueue().size();
+            }
+            return 0;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void showRunStation(K key) {
+        if (key == null) return;
+        ReentrantLock lock = getConfig().getLock();
+        try {
+            lock.lock();
+            log.info("[ KEY-POOL-RUN-STATION ] key-nodes={} running-node={} waiter={}  key-name={}",
+                    getPoolRealSize(key), getPoolRealBusyNodeSize(key), getKeyWaiter(key), key.getName());
+        } finally {
+            unlock(lock);
         }
     }
 
@@ -583,7 +735,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
             }
             return size;
         } finally {
-            lock.unlock();
+            unlock(lock);
         }
     }
 
@@ -607,13 +759,16 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     }
 
     //修改指定节点的limit
-    protected void forceRefreshKeyPoolLimit(K key, int limit) {
+    protected void modifyKeyPoolLimit(K key, int limit) {
         ReentrantLock lock = getConfig().getLock();
         try {
             lock.lock();
-            ArrayList<K> list = new ArrayList<>(1);
-            list.add(key);
-            forceRefreshKeyPoolLimit(list, limit);
+            K realKey = findKeyFromPool(key);
+            if (realKey != null) {
+                realKey.setLimit(limit);
+            } else {
+                log.error("real key is null -> {}", key.getName());
+            }
             // not safe key.setLimit(limit);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -624,31 +779,11 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
 
 
     //强制修改指定节点的limit
-    protected void forceRefreshKeyPoolLimit(List<K> keys, int limit) {
+    protected void modifyKeyPoolLimit(List<K> keys, int limit) {
         ReentrantLock lock = getConfig().getLock();
         try {
             lock.lock();
-            Map<K, Collection<N>> pool = getConfig().getPool();
-            List<K> tmpList = new ArrayList<>(keys.size());
-            for (K key : keys) {
-                boolean contains = pool.containsKey(key);
-                if (contains) tmpList.add(key);
-            }
-            if (tmpList.size() > 0) {
-                Set<K> ks = pool.keySet();
-                Iterator<K> iterator = tmpList.iterator();
-                for (K real : ks) {
-                    while (iterator.hasNext()) {
-                        K tmp = iterator.next();
-                        if (real.equals(tmp)) {
-                            real.setLimit(limit);
-                            iterator.remove();//help quickly loop
-                        }
-                    }
-                    break;// quickly out
-                }
-                // not safe key.setLimit(limit);
-            }
+            keys.forEach(i -> modifyKeyPoolLimit(i, limit));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
@@ -743,31 +878,35 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         }
     }
 
-    //如果当前 keyPool的size大于配置的size，则进行关闭和剔除
-    protected void closeNodeIfNecessary(K key, N node) {
+    /**
+     * @Description: 尝试释放节点, 当limit变小时，如果node持有者主动调用此方法将会主动放弃node
+     * @author wz
+     */
+    protected void tryReleaseNode(K key, N node) {
         //如果实际连接大于配置的数量，则进行剔除
         ReentrantLock lock = this.getConfig().getLock();
         try {
             lock.lock();
+            K realKey = findKeyFromPool(key);
+            //如果key不进行限制 不进行关闭
+            if (realKey == null || realKey.getLimit() == NO_LIMIT) return;
             //对连接数进行调整
-            Collection<N> pool = this.getConfig().getPool().get(key);
+            Collection<N> pool = this.getConfig().getPool().get(realKey);
             //连接池的实际数量大于 key当前配置的
-            log.info("key= {} pool.size()={} key.getLimit()={} ", key.getName(), pool.size(), key.getLimit());
-            if (pool.size() > key.getLimit()) {
-                if (node != null) {
-                    //设置标记
-                    node.close = true;
-                    node.free = true;
-                    boolean done = safeCloseNode(node);
-                    if (done) {
-                        pool.remove(node);
-                    }
+            log.info("realKey= {} pool.size()={} realKey.getLimit()={} ", realKey.getName(), pool.size(), realKey.getLimit());
+            //去掉核心线程的限制
+            //if (pool.size() > realKey.getLimit()) {
+            {
+                log.info("没有等待{}的线程了 尝试释放空闲连接{}", key, node.hashCode());
+                if (releaseNode(node)) {
+                    pool.remove(node);
+                    node.clear();
                 }
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
-            lock.unlock();
+            unlock(lock);
         }
     }
 
@@ -820,6 +959,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         String name = getConfig().getName();
         log.info("{} 连接池 根据最大连接数，清理空闲的连接", name);
         Iterator<N> iterator = list.iterator();
+        //如果limit变小
         while (list.size() > limit && iterator.hasNext()) {
             N node = iterator.next();
             //如果连接没有使用
@@ -837,28 +977,52 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         }
     }
 
+    private void holdNode(N node) {
+        if (node != null) {
+            showRunStation(node.key);
+            node.free = false;
+            node.close = false;
+            node.holder = new WeakReference<>(Thread.currentThread());
+        }
+    }
+
+    private boolean releaseNode(N node) {
+        if (node != null) {
+            showRunStation(node.key);
+            log.info("释放空闲node={}", node.hashCode());
+            //设置标记
+            node.close = true;
+            //free=true 不忙碌标记，如果本次safeCloseNode关闭失败，
+            node.free = false;
+            //主动关闭节点
+            safeCloseNode(node);
+            return true;
+        }
+        return false;
+    }
 
     //没有异常的关闭一个节点
     private boolean safeCloseNode(N node) {
+        ReentrantLock lock = getConfig().getLock();
         try {
-            String name = getConfig().getName();
-            //主动关闭
-            log.info("{} 连接池主动关闭连接", name);
+            lock.lock();
+            //String name = getConfig().getName();
             return closeConnect(node);
         } catch (Exception e) {
             log.error("连接已经设置为关闭状态，但关闭失败!{}", node.toString(), e);
         } finally {
-            node.tryCloseCount++;
+            ++node.tryCloseCount;
+            unlock(lock);
         }
         return node.tryCloseCount > 3;
     }
 
-    @Override
     //注意closePool一定要和openPool配合使用，缺一不可！
     //close 关闭连接池后将做如下事情
     //1.不在接受新的连接请求
     //2.在线程归还连接时，将主动清除等待该连接的线程
     //3.定时器不在等待超时，而直接清除没有使用的连接
+    @Override
     public void closePool() {
         Lock lock = this.getConfig().getLock();
         try {
@@ -932,5 +1096,10 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
         }
         //强制关闭所有连接
         clearAllNode(false);
+    }
+
+    private String getThreadInfo(Thread thread) {
+        if (thread == null) return null;
+        return thread.getThreadGroup() + "-" + thread.getId() + "-" + thread.getName();
     }
 }

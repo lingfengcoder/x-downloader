@@ -2,19 +2,16 @@ package com.pukka.iptv.downloader.task.downloader;
 
 import com.pukka.iptv.downloader.enums.TaskStatus;
 import com.pukka.iptv.downloader.model.*;
-import com.pukka.iptv.downloader.pool.Node;
 import com.pukka.iptv.downloader.task.LocalPathTranService;
 import com.pukka.iptv.downloader.task.callback.FtpTaskNotify;
-import com.pukka.iptv.downloader.task.callback.api.*;
-import com.pukka.iptv.downloader.util.FTPUtils;
-import com.pukka.iptv.downloader.util.FtpPool;
+import com.pukka.iptv.downloader.task.callback.api.TaskNotify;
+import com.pukka.iptv.downloader.util.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ftp.FTPClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
-import java.util.*;
+import java.util.Date;
+import java.util.UUID;
 
 /**
  * @Author: wz
@@ -23,7 +20,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class FtpDownloader extends AbstractDownloader {
+public class HttpDownloader extends AbstractDownloader {
 
     @Autowired
     private LocalPathTranService localPathTranService;
@@ -78,39 +75,34 @@ public class FtpDownloader extends AbstractDownloader {
     }
 
 
+    public static void main(String[] args) throws Exception {
+        FileTask fileTask = new FileTask()
+                .setFileLocalPath("/data/download/test/002656yDIge.jpg").setStoreId(1L)
+                .setAsync(2)
+                .setFileType(2)
+                .setTargetUrl("http://img.netbian.com/file/2022/0329/002656yDIge.jpg")
+                .setFileCode(UUID.randomUUID().toString())
+                .setNotifyUrl("http://localhost:7002/api/testCallback");
+        fileTask.setSourceUrl("http://img.netbian.com/file/2022/0329/002656yDIge.jpg");
+        download(fileTask);
+    }
     /**
      * @param fileTask 文件任务
-     * @Description FTP文件下载
-     * @Author jxm
+     * @Description http文件下载
+     * @Author wangbo
      * @Date 2021-10-16 16:43:32
      */
-    private void download(FileTask fileTask) throws Exception {
-        FTPClient ftpClient;
-        Node<FtpPool.FKey, FTPClient> node = null;
+    private static void download(FileTask fileTask) throws Exception {
         String fileCode = fileTask.getFileCode();
         String sourceUrl = fileTask.getSourceUrl();
-        boolean breakPoint = fileTask.getRetryCount() > 1;//重试次数大于1次认为要断点续传
-        try {
-            FTPUrlInfo ftpUrlInfo = FTPUtils.parseFTPUrl(sourceUrl);
-            //采用FTP连接池 直接使用线程数个连接 保证每个下载线程都有可用的连接
-            FtpPool.FKey key = FtpPool.FKey.general(ftpUrlInfo);
-            node = FtpPool.me().pickBlock(key, 5000);
-            ftpClient = node.getClient();
-            log.info("fileCode:{} ftp 开始下载 {}", fileCode, ftpUrlInfo);
-            //判断是否需要使用代理下载
-            if (breakPoint) {
-                log.info("fileCode:{} ftp  断点文件下载 {}", fileCode, ftpUrlInfo);
-                FTPUtils.breakpointDownload(ftpClient, sourceUrl, fileTask.getFileLocalPath(), info -> Downloading.generalTemp(info.getFilepath(), info));
-            } else {
-                // 完整文件下载
-                FTPUtils.download(ftpClient, sourceUrl, fileTask.getFileLocalPath(), info -> Downloading.generalTemp(info.getFilepath(), info));
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            throw new Exception("fileCode:" + fileCode + " FTP服务异常" + e.getMessage());
-        } finally {
-            //将连接归还池子
-            FtpPool.me().back(node);
+        Proxy proxy = fileTask.getProxy();
+        HttpInfo httpInfo = new HttpInfo().setLocalFilePath(fileTask.getFileLocalPath()).setRemoteUrl(sourceUrl).setFileCode(fileCode);
+        if (proxy != null && proxy.isEnable()) {
+            //使用 代理下载
+            log.info("http使用代理下载");
+            HttpUtil.getInstance().downloadProxyHttp(httpInfo, proxy);
+        } else {
+            HttpUtil.getInstance().downloadHttp(httpInfo);
         }
     }
 

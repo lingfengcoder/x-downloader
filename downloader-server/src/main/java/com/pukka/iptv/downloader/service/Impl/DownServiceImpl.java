@@ -15,7 +15,7 @@ import com.pukka.iptv.downloader.mq.config.QueueConfig;
 import com.pukka.iptv.downloader.mq.model.QueueInfo;
 import com.pukka.iptv.downloader.mq.producer.MqSender;
 import com.pukka.iptv.downloader.service.DownService;
-import com.pukka.iptv.downloader.task.*;
+import com.pukka.iptv.downloader.task.LocalPathTranService;
 import com.pukka.iptv.downloader.task.process.AsyncDownloadProcess;
 import com.pukka.iptv.downloader.task.process.BlockedDownloadProcess;
 import com.pukka.iptv.downloader.util.m3u8.M3u8Util;
@@ -23,10 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author WangBO
@@ -48,10 +47,9 @@ public class DownServiceImpl implements DownService {
     @Autowired
     private Resultlistener resultlistener;
 
-    // @PostConstruct
+   // @PostConstruct
     public void test() {
         //异步下载
-
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
@@ -66,14 +64,14 @@ public class DownServiceImpl implements DownService {
                             .setFileLocalPath("/data/download/test/").setStoreId(1L)
                             .setAsync(1)
                             .setFileType(1)
-                            .setTargetUrl("http://localhost:8080/" + RandomUtil.randomString(6) + "/index.m3u8")
+                            .setTargetUrl("ftp://vstore:iptv!#$vs@172.25.224.110:6069/m3u8/" + RandomUtil.randomString(6) + "/index.m3u8")
                             .setFileCode(UUID.randomUUID().toString())
                             .setNotifyUrl("http://localhost:7002/api/testCallback");
                     int i = RandomUtil.randomInt(10);
                     if (i % 2 == 0) {
                         fileTask.setSourceUrl("http://1257120875.vod2.myqcloud.com/0ef121cdvodtransgzp1257120875/3055695e5285890780828799271/v.f230.m3u8");
                     } else {
-                        fileTask.setSourceUrl("ftp://vstore:iptv!#$vs@172.25.224.110:6069/ts/CNTV/2022/01/04/CCTV-8.ts");
+                        fileTask.setSourceUrl("ftp://vstore:iptv!#$vs@172.25.224.110:6069//Movie/tongyongCP/2022/02/14/MediaInfo64.dll");
                     }
                     download(fileTask);
                 } catch (Exception e) {
@@ -179,31 +177,6 @@ public class DownServiceImpl implements DownService {
                 return R.fail(resp.getMsg());
             }
         }
-    }
-
-
-    public static void main(String[] args) {
-
-        ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-        //ReentrantLock blockLock = new ReentrantLock();
-        int cache = 6;
-        int x = 10;
-        for (int i = 0; i < x; i++) {
-            new Thread(() -> {
-                ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
-                readLock.lock();
-                try {
-                    Thread thread = Thread.currentThread();
-                    log.info("thread:{} 获取到读锁,读到数据{}", thread.getId(), cache);
-                    thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage(), e);
-                } finally {
-                    readLock.unlock();
-                }
-            }, "thread:" + i).start();
-        }
-
     }
 
 

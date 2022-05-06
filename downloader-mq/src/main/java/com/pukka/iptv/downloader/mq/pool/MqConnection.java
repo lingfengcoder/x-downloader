@@ -72,6 +72,7 @@ public class MqConnection {
             factory.setPassword(rabbitMqConfig.getPassword());
             factory.setVirtualHost(rabbitMqConfig.getVhost());
 //            factory.setRequestedChannelMax(0);
+
             factory.setRequestedFrameMax(0);
             factory.setAutomaticRecoveryEnabled(true);
             factory.setNetworkRecoveryInterval(10000); //attempt recovery every 10 seconds

@@ -13,23 +13,22 @@ import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.pukka.iptv.downloader.task.multiplyhandler.AbstractMultiplyTaskPool.NO_LIMIT;
-
 @Component
 @Slf4j
+@Order(2)
 public class DelayQueueManager {
-    @Resource(name = "callbackScheduleThreadPool")
-    private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
+    @Resource(name = "testDelay")
+    private ScheduledThreadPoolExecutor testDelaySchedule;
     @Autowired
     @Qualifier("balanceHttp") //需要指定 用负载的restTemplate
     private RestTemplate balanceHttp;
@@ -44,16 +43,15 @@ public class DelayQueueManager {
      */
     private final static int MAX_DELAY_QUEUE_SIZE = 100;
 
-    @PostConstruct
+    //@PostConstruct
     private void init() {
         //重新设置 管道队列的最大连接数
-        RabbitMqPool.RKey key = RabbitMqPool.RKey.newKey(getQueueInfo(), NO_LIMIT);
+        RabbitMqPool.RKey key = RabbitMqPool.RKey.newKey(getQueueInfo(), 2);
         //获取
         Node<RabbitMqPool.RKey, Channel> node = RabbitMqPool.me().pickNonBlock(key);
         Channel channel = node.getClient();
         MqUtil.declareOrBindQueueAndExchange(channel, getQueueInfo());
-
-        scheduledThreadPoolExecutor.scheduleAtFixedRate(this::excuteThread, 1, 1000, TimeUnit.MILLISECONDS);
+        testDelaySchedule.scheduleAtFixedRate(this::excuteThread, 1, 1000, TimeUnit.MILLISECONDS);
 
     }
 

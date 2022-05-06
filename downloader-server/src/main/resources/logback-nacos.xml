@@ -42,7 +42,25 @@
             <!--<level>DEBUG</level>-->
         </filter>
     </appender>
-
+    <appender name="amqp" class="org.springframework.amqp.rabbit.logback.AmqpAppender">
+        <encoder>
+            <pattern>${AMQP_LOG_PATTERN}</pattern>
+        </encoder>
+        <addresses>${spring.rabbitmq.addresses}</addresses>
+        <username>${spring.rabbitmq.username}</username>
+        <password>${spring.rabbitmq.password}</password>
+        <applicationId>${spring.application.name}</applicationId>
+        <declareExchange>true</declareExchange>
+        <exchangeType>topic</exchangeType>
+        <exchangeName>log.exchange.topic</exchangeName>
+        <virtualHost>${spring.rabbitmq.virtual-host}</virtualHost>
+        <routingKeyPattern>*.${spring.application.name}</routingKeyPattern>
+        <durable>false</durable>
+        <generateId>true</generateId>
+        <charset>UTF-8</charset>
+        <deliveryMode>NON_PERSISTENT</deliveryMode>
+        <autoDelete>false</autoDelete>
+    </appender>
     <!-- Log file debug output -->
     <appender name="${log.file.name}" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${log.file.path}${log.file.name}.${log.file.suffix}</file>
@@ -119,27 +137,9 @@
 
     <!-- Level: FATAL 0  ERROR 3  WARN 4  INFO 6  DEBUG 7 -->
     <root level="${logback.level}">
+        <appender-ref ref="amqp"/>
         <appender-ref ref="console"/>
         <appender-ref ref="${log.file.name}"/>
         <!-- <appender-ref ref="error"/>-->
     </root>
 </configuration>
-        <!--    <appender name="amqp" class="org.springframework.amqp.rabbit.logback.AmqpAppender">-->
-        <!--        <encoder>-->
-        <!--            <pattern>${AMQP_LOG_PATTERN}</pattern>-->
-        <!--        </encoder>-->
-        <!--        <addresses>${spring.rabbitmq.addresses}</addresses>-->
-        <!--        <username>${spring.rabbitmq.username}</username>-->
-        <!--        <password>${spring.rabbitmq.password}</password>-->
-        <!--        <applicationId>${spring.application.name}</applicationId>-->
-        <!--        <declareExchange>true</declareExchange>-->
-        <!--        <exchangeType>topic</exchangeType>-->
-        <!--        <exchangeName>log.exchange.topic</exchangeName>-->
-        <!--        <virtualHost>${spring.rabbitmq.virtual-host}</virtualHost>-->
-        <!--        <routingKeyPattern>*.${spring.application.name}</routingKeyPattern>-->
-        <!--        <durable>false</durable>-->
-        <!--        <generateId>true</generateId>-->
-        <!--        <charset>UTF-8</charset>-->
-        <!--        <deliveryMode>NON_PERSISTENT</deliveryMode>-->
-        <!--        <autoDelete>false</autoDelete>-->
-        <!--    </appender>-->

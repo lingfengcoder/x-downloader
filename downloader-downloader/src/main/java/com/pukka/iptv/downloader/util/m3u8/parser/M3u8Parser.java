@@ -2,9 +2,8 @@ package com.pukka.iptv.downloader.util.m3u8.parser;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.pukka.iptv.downloader.model.*;
-
-import com.pukka.iptv.downloader.util.AuthorityUtil;
+import com.pukka.iptv.downloader.model.ConnectHead;
+import com.pukka.iptv.downloader.model.M3u8;
 import com.pukka.iptv.downloader.util.IoUtil;
 import com.pukka.iptv.downloader.util.SourceInfo;
 import com.pukka.iptv.downloader.util.UrlParser;
@@ -12,7 +11,10 @@ import com.pukka.iptv.downloader.util.m3u8.M3u8Util;
 import com.pukka.iptv.downloader.util.m3u8.api.M3u8Api;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +50,7 @@ public abstract class M3u8Parser implements M3u8Api {
     }
 
     //前置处理器
-    private void preProcess(Supplier<ConnectHead> supplier) {
+    private static void preProcess(Supplier<ConnectHead> supplier) {
         headThreadLocal.set(supplier.get());
     }
 
@@ -420,7 +422,7 @@ public abstract class M3u8Parser implements M3u8Api {
         return 0L;
     }
 
-    private static File makeLocalFile(String path) throws IOException {
+    public static File makeLocalFile(String path) throws IOException {
         File file = new File(path);
         //文件存在不下载
         if (FileUtil.exist(file)) {
@@ -473,5 +475,6 @@ public abstract class M3u8Parser implements M3u8Api {
         M3u8 m3u8 = M3u8.generalM3u8("http://127.0.0.1:/a/b/c/111.m3u8", path, "http://127.0.0.1/a/b/c.m3u8");
         M3u8 count = M3u8Util.getInstance().getM3u8FinishCount(m3u8);
         log.info(count.toString());
+        download("http://img.netbian.com/file/2019/0824/small4a68818befe4ec269bf52b6f6f6ccae61566660671.jpg","/data/m3u8/m3u8demo/small4a68818befe4ec269bf52b6f6f6ccae61566660671.jpg");
     }
 }

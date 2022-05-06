@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>x-downloader</artifactId>
-        <groupId>lingfeng-biz</groupId>
+        <artifactId>iptv-downloader</artifactId>
+        <groupId>com.pukka.iptv</groupId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -29,39 +29,34 @@
     <dependencies>
 
         <!--        <dependency>-->
-        <!--            <groupId>lingfeng-biz</groupId>-->
+        <!--            <groupId>com.pukka.iptv</groupId>-->
         <!--            <artifactId>common-base</artifactId>-->
         <!--            <version>1.0.0</version>-->
         <!--        </dependency>-->
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-bizpool</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-data</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-mq</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-nacos</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-ffmpeg</artifactId>
             <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
         </dependency>
     </dependencies>
 

@@ -1,8 +1,6 @@
 package com.pukka.iptv.downloader.dispatcher;
 
 
-import cn.hutool.core.thread.ThreadFactoryBuilder;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.pukka.iptv.downloader.config.DispatcherConfig;
 import com.pukka.iptv.downloader.log.BizLog;
@@ -12,19 +10,14 @@ import com.pukka.iptv.downloader.threadpool.ThreadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import sun.misc.ThreadGroupUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -49,6 +42,7 @@ public class DispatcherCenter implements NacosNotify {
     private void init() {
         //启动时就判断是否启动内部定时任务
         if (config.getEnableSchedule()) {
+            // if (true) {
             doSchedule();
         }
     }
@@ -69,9 +63,7 @@ public class DispatcherCenter implements NacosNotify {
         // 内部定时任务执行 每秒执行一次
         if (ThreadUtils.isNullOrDone(scheduledFuture)) {
             scheduledFuture =
-                    scheduledThreadPoolExecutor.scheduleAtFixedRate(() -> {
-                        dispatch();
-                    }, 1, config.getIntervalTime(), TimeUnit.MILLISECONDS);
+                    scheduledThreadPoolExecutor.scheduleAtFixedRate(this::dispatch, 1, config.getIntervalTime(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -98,59 +90,6 @@ public class DispatcherCenter implements NacosNotify {
                 }
             }
         }
-    }
-
-
-    public static void main(String[] args) {
-
-    }
-
-    private void demo1() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(5);
-        executor.setQueueCapacity(10);
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        ThreadFactory threadFactory = ThreadFactoryBuilder.create()
-                .setDaemon(false).setNamePrefix("##biz-test##").build();
-        executor.setThreadFactory(threadFactory);
-        executor.initialize();
-
-        ReentrantLock lock = new ReentrantLock();
-        ReentrantLock innerLock = new ReentrantLock();
-        int x = 20;
-        CountDownLatch latch = new CountDownLatch(x);
-        AtomicInteger data = new AtomicInteger(0);
-        lock.lock();
-        for (int i = 0; i < x; i++) {
-            executor.submit(() -> {
-                try {
-                    Thread thread = Thread.currentThread();
-                    log.info("thread name :{},thread id:{},thread group:{}", thread.getName(), thread.getId(), thread.getThreadGroup());
-                    thread.sleep(RandomUtil.randomLong(2000, 5000));
-                    innerLock.lock();
-
-                    int result = data.incrementAndGet();
-                    log.info("get data:{}", result);
-                    innerLock.unlock();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    latch.countDown();
-                }
-            });
-        }
-
-        log.info("main thread wait");
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        lock.unlock();
-        log.info("all done! data={}", data);
-        log.info("bbq 666");
-
     }
 
 }

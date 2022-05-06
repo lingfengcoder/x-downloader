@@ -3,7 +3,6 @@ package com.pukka.iptv.downloader.policy;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.SystemClock;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.RandomUtil;
 import com.pukka.iptv.downloader.mq.model.MsgTask;
 import com.pukka.iptv.downloader.mq.model.QueueInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,7 @@ public class WorkMoreGetMorePolicy implements DeliverPolicy<QueueInfo, MsgTask> 
         if (ObjectUtil.isEmpty(queueRemain) || ObjectUtil.isEmpty(taskList)) return null;
         //打印空闲队列和数量
         for (QueueInfo queue : queueRemain) {
-            //  log.info(queue.queue() + "空闲:{}", queue.remainCount());
+            log.info(queue.queue() + "空闲:{}", queue.remainCount());
         }
         //平均分配任务
         return workMoreGetMoreDeliveryTask(taskList, queueRemain);
@@ -159,6 +158,31 @@ public class WorkMoreGetMorePolicy implements DeliverPolicy<QueueInfo, MsgTask> 
         } else {
             lastQueuePriority.put(info, 1);
         }
+    }
+
+    public static void main(String[] args) {
+
+        int x = 10;
+        List<MsgTask> remainTask = new ArrayList<>();
+        for (int i = 0; i < x; i++) {
+            remainTask.add(new MsgTask().setMsg("msg: " + x));
+        }
+
+
+        List<QueueInfo> queues = new ArrayList<>();
+        int c = 4;
+
+        queues.add(new QueueInfo().queue("q1").remainCount(2));
+        queues.add(new QueueInfo().queue("q2").remainCount(2));
+        queues.add(new QueueInfo().queue("q3").remainCount(3));
+        queues.add(new QueueInfo().queue("q4").remainCount(3));
+        queues.add(new QueueInfo().queue("q5").remainCount(6));
+        queues.add(new QueueInfo().queue("q6").remainCount(6));
+
+        Map<QueueInfo, List<MsgTask>> result = new HashMap<>();
+        workMoreGetMore(queues, remainTask, result);
+
+        System.out.println(queues);
     }
 
 

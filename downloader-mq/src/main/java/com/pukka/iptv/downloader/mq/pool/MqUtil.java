@@ -76,7 +76,6 @@ public class MqUtil {
     //nack 应答
     public static boolean nack(Channel channel, Long deliveryTag) {
         try {
-            Thread.currentThread().interrupt();
             if (!assertChannel(channel)) return false;
             if (channel.isOpen()) {
                 channel.basicNack(deliveryTag, false, true);
@@ -161,5 +160,24 @@ public class MqUtil {
             log.error(e.getMessage(), e);
         }
         return -1;
+    }
+
+
+    //http://172.25.224.146:15672/api/queues/iptv_cloud/
+    // downloader_execute_172_25_224_186_7004_DEFAULT_iptv__downloaderserver?
+    // lengths_age=60&lengths_incr=5&msg_rates_age=60&msg_rates_incr=5&data_rates_age=60&data_rates_incr=5
+
+    public static Integer getQueueConsumerCount(String queueName) {
+        RabbitMqConfig bean = SpringUtil.getBean(RabbitMqConfig.class);
+        String url = "http://" + bean.getAddresses().split(":")[0] + ":15672/api/queues/" + bean.getVhost() + "/" + queueName
+                + "?lengths_age=60&lengths_incr=5&msg_rates_age=60&msg_rates_incr=5&data_rates_age=60&data_rates_incr=5";
+        try {
+            JSONObject data = RestHttp.httpAuth(url, bean.getUsername(), bean.getPassword());
+            //Consumer个数
+            return Math.max(0, data.getInteger("consumers"));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return 0;
     }
 }

@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>lingfeng-biz</groupId>
-        <artifactId>x-downloader</artifactId>
+        <artifactId>iptv-downloader</artifactId>
+        <groupId>com.pukka.iptv</groupId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -16,20 +16,27 @@
     </description>
     <dependencies>
         <!--        <dependency>-->
-        <!--            <groupId>lingfeng-biz</groupId>-->
+        <!--            <groupId>com.pukka.iptv</groupId>-->
         <!--            <artifactId>downloader-nacos</artifactId>-->
         <!--            <version>1.0.0</version>-->
         <!--        </dependency>-->
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-dispatcher</artifactId>
             <version>1.0.0</version>
         </dependency>
 
         <dependency>
-            <groupId>lingfeng-biz</groupId>
+            <groupId>com.pukka.iptv</groupId>
             <artifactId>downloader-downloader</artifactId>
             <version>1.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -41,11 +48,13 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
-            <version>${validation-api.version}</version>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>${fastjson.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

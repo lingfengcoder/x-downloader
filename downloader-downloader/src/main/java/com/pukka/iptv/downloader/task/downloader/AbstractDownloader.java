@@ -26,6 +26,8 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
     public void preHandler(DownloadTask task) {
         try {
             if (task == null) return;
+            task.setStartTime(new Date());
+            task.setStatus(DownloadStatus.START);
             //Thread.sleep(RandomUtil.randomLong(2000L, 10000L));
             //回调通知
             TaskNotify notify = getNotify();
@@ -62,7 +64,6 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
         }
     }
 
-
     @Override
     public DownloadTask selectTask(DownloadTask task) {
         return null;
@@ -88,7 +89,7 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
         }
         // HTTP下载
         if (fileTask.getSourceUrl().toLowerCase().startsWith(HTTP)) {
-            return SpringUtil.getBean(M3u8Downloader.class);
+            return SpringUtil.getBean(HttpDownloader.class);
         }
         //ftp下载
         else if (fileTask.getSourceUrl().toLowerCase().startsWith(FTP)) {
