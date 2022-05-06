@@ -409,7 +409,7 @@ public abstract class AbstractPool<K extends Key<K>, C, N extends Node<K, C>> im
     }
 
     /**
-     * @Description 归还一个连接;如果有等待队列,唤醒队列等待时间最久的线程并分配连接
+     * @Description 归还一个连接;如果有等待队列,唤醒队列等待时间最久的线程并分配连接 支持重复归还
      * @author wz
      * @date 2022/1/5 11:28
      */
