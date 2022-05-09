@@ -1,5 +1,6 @@
 package com.lingfeng.rpc.server;
 
+import com.lingfeng.rpc.model.Address;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -7,6 +8,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetAddress;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.State.TERMINATED;
@@ -18,6 +22,7 @@ import static java.lang.Thread.State.TERMINATED;
  */
 @Slf4j
 public class NettyServer implements Server {
+
     private final static AtomicInteger idStore = new AtomicInteger(0);
 
     private final static String PREFIX = "Biz-NettyServer:";
@@ -26,7 +31,7 @@ public class NettyServer implements Server {
     //服务地址
     private volatile Address address;
     //服务id
-    private volatile int serverId = idStore.addAndGet(1);
+    private final int serverId = idStore.addAndGet(1);
     //服务状态
     private volatile int state = 0;//0 close 1 run 2 idle
     //任务处理器

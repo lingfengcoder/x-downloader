@@ -1,16 +1,25 @@
 package com.lingfeng.rpc.client;
 
+import com.lingfeng.rpc.model.Message;
+import com.lingfeng.rpc.model.MessageType;
+import com.lingfeng.rpc.trans.MessageTrans;
+import com.lingfeng.rpc.util.GsonTool;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
+import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,13 +69,15 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //发送消息到服务端
-        ctx.writeAndFlush(buildMsg("hi I m client " + clientId));
+        ByteBuf byteBuf = MessageTrans.buildMsg("hi I m client " + clientId, clientId);
+        ctx.writeAndFlush(byteBuf);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         //接收服务端发送过来的消息
-        log.info("[netty client id: {}] 收到服务端{}的消息：{}", clientId, ctx.channel().remoteAddress(), parseStr((ByteBuf) msg));
+        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
+        MessageDispatcher.dispatcher(client, message);
     }
 
     @Override
@@ -74,6 +85,7 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
         super.exceptionCaught(ctx, cause);
         log.error("[netty client id: {}] exceptionCaught 客户端 error= {}", clientId, cause.getMessage(), cause);
         client.close();
+        client.restart();
     }
 
 
@@ -88,10 +100,7 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
         log.info("[netty client id: {}] === channelInactive ===", clientId);
         client.close();
-        do {
-            TimeUnit.SECONDS.sleep(2);
-            client.start();
-        } while (client.state() != State.RUNNING.getCode());
+        client.restart();
     }
 
     public void write(String msg) {
@@ -104,16 +113,16 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
         }
 
         //  channel.writeAndFlush(msg);
-        channel.writeAndFlush(buildMsg(msg));
+        ByteBuf byteBuf = MessageTrans.buildMsg(msg, clientId);
+        try {
+            channel.writeAndFlush(byteBuf);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        } finally {
+            //byteBuf.release();
+        }
 
     }
 
-    private ByteBuf buildMsg(String msg) {
-        return Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
-    }
-
-    private String parseStr(ByteBuf byteBuf) {
-        return byteBuf.toString(CharsetUtil.UTF_8);
-    }
 
 }

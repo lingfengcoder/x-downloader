@@ -3,7 +3,7 @@ package com.lingfeng.rpc;
 import com.lingfeng.rpc.client.MyChannelFutureListener;
 import com.lingfeng.rpc.client.MyClientHandler;
 import com.lingfeng.rpc.client.NettyClient;
-import com.lingfeng.rpc.server.Address;
+import com.lingfeng.rpc.model.Address;
 import com.lingfeng.rpc.server.MyServerHandler;
 import com.lingfeng.rpc.server.NettyServer;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +19,9 @@ import java.util.concurrent.TimeUnit;
 public class Test {
     public static void main(String[] args) throws InterruptedException {
         NettyServer server = NettyServer.getInstance();
+        MyServerHandler serverHandler = new MyServerHandler();
         server.setAddress(new Address("127.0.0.1", 9999))
-                .setServerHandler(new MyServerHandler()).start();
+                .setServerHandler(serverHandler).start();
 
 
         NettyClient client = NettyClient.getInstance();
@@ -50,7 +51,7 @@ public class Test {
                     handler1.write(data);
                 } catch (Exception e) {
                     log.info("发送{} 失败", data);
-                    //log.error(e.getMessage(), e);
+                    //  log.error(e.getMessage(), e);
                     i--;
                 }
             }
@@ -70,16 +71,23 @@ public class Test {
                     handler2.write(data);
                 } catch (Exception e) {
                     log.info("发送{} 失败", data);
-                    //log.error(e.getMessage(), e);
+                    // log.error(e.getMessage(), e);
                     i--;
                 }
             }
         }).start();
 
+
         TimeUnit.SECONDS.sleep(5);
+        log.info("开始关闭 channel 1");
+        serverHandler.closeChannel(1);
+
+        TimeUnit.SECONDS.sleep(5);
+        log.info("开始关闭server");
         server.stop();
 
         TimeUnit.SECONDS.sleep(5);
+        log.info("开始重启server");
         server.restart();
 
         TimeUnit.SECONDS.sleep(5);

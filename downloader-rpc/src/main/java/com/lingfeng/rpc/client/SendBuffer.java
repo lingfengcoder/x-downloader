@@ -47,7 +47,8 @@ public class SendBuffer<T> {
         if (handler.getClient().state() != state) {
             throw new RuntimeException("[netty client id: " + handler.getClientId() + "] client state error, state=" + state);
         }
-        handler.getChannel().writeAndFlush(buildMsg(msg));
+        ByteBuf byteBuf = buildMsg(msg);
+        handler.getChannel().writeAndFlush(byteBuf);
     }
 
     private ByteBuf buildMsg(T msg) {

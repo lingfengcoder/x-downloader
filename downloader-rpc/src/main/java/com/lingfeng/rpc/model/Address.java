@@ -1,4 +1,4 @@
-package com.lingfeng.rpc.server;
+package com.lingfeng.rpc.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

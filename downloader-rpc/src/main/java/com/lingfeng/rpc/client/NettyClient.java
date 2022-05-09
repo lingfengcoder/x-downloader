@@ -1,17 +1,15 @@
 package com.lingfeng.rpc.client;
 
 
-import com.lingfeng.rpc.server.Address;
+import com.lingfeng.rpc.model.Address;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Thread.State.TERMINATED;
@@ -31,7 +29,7 @@ public class NettyClient implements Client {
     //服务地址
     private volatile Address address;
     //id
-    private volatile int clientId = idStore.addAndGet(1);
+    private final int clientId = idStore.addAndGet(1);
     //服务状态
     private volatile int state = 0;//0 close 1 run 2 idle
 
@@ -49,6 +47,8 @@ public class NettyClient implements Client {
     public static NettyClient getInstance() {
         return instance;
     }
+
+    private volatile Channel channel;
 
     private synchronized void start0() {
         log.info("[netty client id:{}] start0", clientId);
@@ -95,18 +95,23 @@ public class NettyClient implements Client {
                 channelFuture.addListener(futureListener);
                 log.info("[netty client id:{}] 客户端启动成功！", clientId);
                 state = 1;
+                //channel
+                channel = channelFuture.channel();
                 //对通道关闭进行监听
                 channelFuture.channel().closeFuture().sync();
             } catch (InterruptedException e) {
                 state = 0;
                 log.error(e.getMessage(), e);
             } finally {
+                //关闭管道
+                closeChannel();
                 //关闭线程组
                 log.info("[netty client id:{}] 客户端关闭线程组", clientId);
                 eventExecutors.shutdownGracefully();
             }
         });
         if (mainThread != null) {
+            mainThread.setPriority(Thread.MAX_PRIORITY);
             mainThread.setDaemon(true);
             mainThread.setName(PREFIX + ":" + mainThread.getId());
             mainThread.start();
@@ -130,8 +135,25 @@ public class NettyClient implements Client {
     }
 
     @Override
+    public void restart() {
+        log.info("[netty client id: {}] === restart ===", clientId);
+        do {
+            try {
+                TimeUnit.SECONDS.sleep(2);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            start();
+        } while (state() != State.RUNNING.getCode());
+    }
+
+    @Override
     public void close() {
         close0();
+    }
+
+    private void closeChannel() {
+        channel.close();
     }
 
     public NettyClient setAddress(Address address) {
@@ -149,5 +171,11 @@ public class NettyClient implements Client {
         return this;
     }
 
+    public int getClientId() {
+        return clientId;
+    }
 
+    public Channel getChannel() {
+        return channel;
+    }
 }

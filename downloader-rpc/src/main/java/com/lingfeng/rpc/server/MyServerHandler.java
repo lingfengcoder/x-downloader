@@ -1,16 +1,23 @@
 package com.lingfeng.rpc.server;
 
+import com.lingfeng.rpc.model.Message;
+import com.lingfeng.rpc.trans.MessageTrans;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @Author: wz
@@ -24,18 +31,40 @@ import lombok.extern.slf4j.Slf4j;
 public class MyServerHandler extends ChannelInboundHandlerAdapter {
 
     private volatile int serverId;
+    //连接通道的集合
+    private final ConcurrentHashMap<Integer, Channel> channels = new ConcurrentHashMap<>();
+
+    public void closeChannel(Integer channelId) {
+        Channel channel = channels.get(channelId);
+        if (channel != null) {
+            log.info("关闭channel{}", channelId);
+            channel.close();
+            channels.remove(channelId);
+        }
+    }
+
+    public void addChannel(Integer clientId, Channel channel) {
+        // InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
+        if (!channels.containsKey(clientId)) {
+            channels.put(clientId, channel);
+        }
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        //获取客户端发送过来的消息
-        ByteBuf byteBuf = (ByteBuf) msg;
-        log.info("[netty server handler serverId={}] 收到客户端{}", serverId, ctx.channel().remoteAddress() + "发送的消息：" + byteBuf.toString(CharsetUtil.UTF_8));
+        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
+        int clientId = message.getClientId();
+        Channel channel = ctx.channel();
+        addChannel(clientId, channel);
+        MessageDispatcher.dispatcher(message);
+        ReferenceCountUtil.release(msg);
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         //发送消息给客户端
-        ctx.writeAndFlush(Unpooled.copiedBuffer("服务端已收到消息，并给你发送一个问号?", CharsetUtil.UTF_8));
+        ByteBuf buf = MessageTrans.buildMsg("服务端已收到消息", -1);
+        ctx.writeAndFlush(buf);
     }
 
     @Override
