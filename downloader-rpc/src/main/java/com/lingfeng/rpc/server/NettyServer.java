@@ -8,6 +8,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetAddress;
@@ -85,9 +87,12 @@ public class NettyServer implements Server {
                             @Override
                             protected void initChannel(SocketChannel socketChannel) throws Exception {
                                 //给pipeline管道设置处理器
-                                socketChannel.pipeline().addLast(new BizDecoder());
-                                socketChannel.pipeline().addLast(new BizEncoder());
-                                socketChannel.pipeline().addLast(serverHandler);
+                                //new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,12,4,0,0)
+                                ChannelPipeline pipeline = socketChannel.pipeline();
+                                pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 1, 4, 0, 0));
+                                pipeline.addLast(new BizDecoder());
+                                pipeline.addLast(new BizEncoder());
+                                pipeline.addLast(serverHandler);
                             }
                         });//给workerGroup的EventLoop对应的管道设置处理器
                 log.info("[netty server id:{}] 服务端已经准备就绪... {}", serverId, address);

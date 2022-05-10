@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Setter
 @Accessors(chain = true)
 @ChannelHandler.Sharable
-public class MyServerHandler extends ChannelInboundHandlerAdapter {
+public class MyServerHandler extends SimpleChannelInboundHandler<BizFrame> {
 
     private volatile int serverId;
     //连接通道的集合
@@ -51,10 +51,9 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-        BizFrame frame = (BizFrame) msg;
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, BizFrame frame) throws Exception {
         log.info("frame = {}", frame);
         Message<Object> message = MessageTrans.parseStr(frame);
         log.info("message = {}", message);
@@ -68,18 +67,9 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
         } else {
             log.error("bad frame");
         }
-
         BizFrame frame2 = MessageTrans.buildMsg("服务端已收到消息", -1);
         ctx.writeAndFlush(frame2);
-
-
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        //发送消息给客户端
-        // BizFrame frame = MessageTrans.buildMsg("服务端已收到消息", -1);
-        //ctx.writeAndFlush(frame);
+        //ReferenceCountUtil.release(msg);
     }
 
     @Override
@@ -105,12 +95,14 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
     //当客户端主动断开服务端的链接后，这个通道就是不活跃的。也就是说客户端与服务端的关闭了通信通道并且不可以传输数据
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
         log.error("[netty server handler serverId={}]  客户端断开链接 {}", serverId, ctx.channel().localAddress().toString());
 
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
         log.error("[netty server handler serverId={}]  exceptionCaught = {} ", serverId, cause.getMessage(), cause);
         //发生异常，关闭通道
         ctx.close();

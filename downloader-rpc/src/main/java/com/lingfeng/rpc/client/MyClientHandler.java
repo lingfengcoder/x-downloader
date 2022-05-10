@@ -7,11 +7,9 @@ import com.lingfeng.rpc.trans.MessageTrans;
 import com.lingfeng.rpc.util.GsonTool;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.util.CharsetUtil;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.internal.StringUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @Accessors(chain = true)
 @ChannelHandler.Sharable
-public class MyClientHandler extends ChannelInboundHandlerAdapter {
+public class MyClientHandler extends SimpleChannelInboundHandler<BizFrame> {
 
 
     private volatile int clientId;
@@ -69,16 +67,16 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        super.channelActive(ctx);
         //发送消息到服务端
         BizFrame bizFrame = MessageTrans.buildMsg("hi I m client " + clientId, clientId);
         ctx.writeAndFlush(bizFrame);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, BizFrame frame) throws Exception {
         //接收服务端发送过来的消息
 //        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
-        BizFrame frame = (BizFrame) msg;
         log.info("frame = {}", frame);
         Message<Object> message = MessageTrans.parseStr(frame);
         log.info("message = {}", message);
@@ -86,6 +84,7 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
             //对消息进行分发处理
             MessageDispatcher.dispatcher(client, message);
         }
+        // ReferenceCountUtil.release(msg);
     }
 
     @Override

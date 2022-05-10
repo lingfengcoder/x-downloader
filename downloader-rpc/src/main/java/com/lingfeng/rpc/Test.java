@@ -36,7 +36,7 @@ public class Test {
 //                .setHandler(handler2).setListener(new MyChannelFutureListener()).start();
 
         TimeUnit.SECONDS.sleep(5);
-        int x = 1000;
+        int x = 100;
         int finalX = x;
         new Thread(() -> {
             for (int i = 0; i < finalX; i++) {

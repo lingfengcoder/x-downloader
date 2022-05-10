@@ -9,6 +9,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
@@ -87,8 +89,11 @@ public class NettyClient implements Client {
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
-                                ch.pipeline().addLast(new BizDecoder());
-                                ch.pipeline().addLast(new BizEncoder());
+                                ChannelPipeline pipeline = ch.pipeline();
+                                pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 1, 4, 0, 0));
+                                pipeline.addLast(new LoggingHandler());
+                                pipeline.addLast(new BizDecoder());
+                                pipeline.addLast(new BizEncoder());
                                 //添加客户端通道的处理器
                                 ch.pipeline().addLast(handlerAdapter);
                             }
