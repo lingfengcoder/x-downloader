@@ -1,6 +1,7 @@
 package com.lingfeng.rpc.server;
 
 import com.lingfeng.rpc.model.Message;
+import com.lingfeng.rpc.trans.BizFrame;
 import com.lingfeng.rpc.trans.MessageTrans;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -52,19 +53,33 @@ public class MyServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
-        int clientId = message.getClientId();
-        Channel channel = ctx.channel();
-        addChannel(clientId, channel);
-        MessageDispatcher.dispatcher(message);
-        ReferenceCountUtil.release(msg);
+
+        BizFrame frame = (BizFrame) msg;
+        log.info("frame = {}", frame);
+        Message<Object> message = MessageTrans.parseStr(frame);
+        log.info("message = {}", message);
+
+//        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
+        if (message != null) {
+            int clientId = message.getClientId();
+            Channel channel = ctx.channel();
+            addChannel(clientId, channel);
+            MessageDispatcher.dispatcher(message);
+        } else {
+            log.error("bad frame");
+        }
+
+        BizFrame frame2 = MessageTrans.buildMsg("服务端已收到消息", -1);
+        ctx.writeAndFlush(frame2);
+
+
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         //发送消息给客户端
-        ByteBuf buf = MessageTrans.buildMsg("服务端已收到消息", -1);
-        ctx.writeAndFlush(buf);
+        // BizFrame frame = MessageTrans.buildMsg("服务端已收到消息", -1);
+        //ctx.writeAndFlush(frame);
     }
 
     @Override

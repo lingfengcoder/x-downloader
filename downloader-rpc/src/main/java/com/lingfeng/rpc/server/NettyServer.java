@@ -1,6 +1,8 @@
 package com.lingfeng.rpc.server;
 
 import com.lingfeng.rpc.model.Address;
+import com.lingfeng.rpc.trans.BizDecoder;
+import com.lingfeng.rpc.trans.BizEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -83,6 +85,8 @@ public class NettyServer implements Server {
                             @Override
                             protected void initChannel(SocketChannel socketChannel) throws Exception {
                                 //给pipeline管道设置处理器
+                                socketChannel.pipeline().addLast(new BizDecoder());
+                                socketChannel.pipeline().addLast(new BizEncoder());
                                 socketChannel.pipeline().addLast(serverHandler);
                             }
                         });//给workerGroup的EventLoop对应的管道设置处理器

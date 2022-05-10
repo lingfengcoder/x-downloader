@@ -2,6 +2,8 @@ package com.lingfeng.rpc.client;
 
 
 import com.lingfeng.rpc.model.Address;
+import com.lingfeng.rpc.trans.BizDecoder;
+import com.lingfeng.rpc.trans.BizEncoder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -85,6 +87,8 @@ public class NettyClient implements Client {
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
+                                ch.pipeline().addLast(new BizDecoder());
+                                ch.pipeline().addLast(new BizEncoder());
                                 //添加客户端通道的处理器
                                 ch.pipeline().addLast(handlerAdapter);
                             }

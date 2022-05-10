@@ -30,17 +30,18 @@ public class Test {
                 .setHandler(handler1).setListener(new MyChannelFutureListener()).start();
 
 
-        NettyClient client2 = new NettyClient();
-        MyClientHandler handler2 = new MyClientHandler();
-        client2.setAddress(new Address("127.0.0.1", 9999))
-                .setHandler(handler2).setListener(new MyChannelFutureListener()).start();
+//        NettyClient client2 = new NettyClient();
+//        MyClientHandler handler2 = new MyClientHandler();
+//        client2.setAddress(new Address("127.0.0.1", 9999))
+//                .setHandler(handler2).setListener(new MyChannelFutureListener()).start();
 
+        TimeUnit.SECONDS.sleep(5);
         int x = 1000;
         int finalX = x;
         new Thread(() -> {
             for (int i = 0; i < finalX; i++) {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(100);
+                    // TimeUnit.MILLISECONDS.sleep(100);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -52,43 +53,53 @@ public class Test {
                 } catch (Exception e) {
                     log.info("发送{} 失败", data);
                     //  log.error(e.getMessage(), e);
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(2000);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
                     i--;
                 }
             }
         }).start();
 
 
-        new Thread(() -> {
-            for (int i = 0; i < x; i++) {
-                try {
-                    TimeUnit.MILLISECONDS.sleep(100);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                String data = null;
-                try {
-                    data = "[client1] bbq-" + i;
-                    handler2.write(data);
-                } catch (Exception e) {
-                    log.info("发送{} 失败", data);
-                    // log.error(e.getMessage(), e);
-                    i--;
-                }
-            }
-        }).start();
+//        new Thread(() -> {
+//            for (int i = 0; i < x; i++) {
+//                try {
+//                    // TimeUnit.MILLISECONDS.sleep(5000);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//                String data = null;
+//                try {
+//                    data = "[client1] bbq-" + i;
+//                    handler2.write(data);
+//                } catch (Exception e) {
+//                    log.info("发送{} 失败", data);
+//                    // log.error(e.getMessage(), e);
+//                    try {
+//                        TimeUnit.MILLISECONDS.sleep(2000);
+//                    } catch (InterruptedException interruptedException) {
+//                        interruptedException.printStackTrace();
+//                    }
+//                    i--;
+//                }
+//            }
+//        }).start();
 
 
-        TimeUnit.SECONDS.sleep(5);
+        //TimeUnit.SECONDS.sleep(5);
         log.info("开始关闭 channel 1");
-        serverHandler.closeChannel(1);
+        // serverHandler.closeChannel(1);
 
         TimeUnit.SECONDS.sleep(5);
-        log.info("开始关闭server");
-        server.stop();
+        // log.info("开始关闭server");
+        // server.stop();
 
         TimeUnit.SECONDS.sleep(5);
-        log.info("开始重启server");
-        server.restart();
+        // log.info("开始重启server");
+        // server.restart();
 
         TimeUnit.SECONDS.sleep(5);
         //client2.close();

@@ -2,6 +2,7 @@ package com.lingfeng.rpc.client;
 
 import com.lingfeng.rpc.model.Message;
 import com.lingfeng.rpc.model.MessageType;
+import com.lingfeng.rpc.trans.BizFrame;
 import com.lingfeng.rpc.trans.MessageTrans;
 import com.lingfeng.rpc.util.GsonTool;
 import io.netty.buffer.ByteBuf;
@@ -69,15 +70,22 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //发送消息到服务端
-        ByteBuf byteBuf = MessageTrans.buildMsg("hi I m client " + clientId, clientId);
-        ctx.writeAndFlush(byteBuf);
+        BizFrame bizFrame = MessageTrans.buildMsg("hi I m client " + clientId, clientId);
+        ctx.writeAndFlush(bizFrame);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         //接收服务端发送过来的消息
-        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
-        MessageDispatcher.dispatcher(client, message);
+//        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
+        BizFrame frame = (BizFrame) msg;
+        log.info("frame = {}", frame);
+        Message<Object> message = MessageTrans.parseStr(frame);
+        log.info("message = {}", message);
+        if (message != null) {
+            //对消息进行分发处理
+            MessageDispatcher.dispatcher(client, message);
+        }
     }
 
     @Override
@@ -113,9 +121,10 @@ public class MyClientHandler extends ChannelInboundHandlerAdapter {
         }
 
         //  channel.writeAndFlush(msg);
-        ByteBuf byteBuf = MessageTrans.buildMsg(msg, clientId);
+//        ByteBuf byteBuf = MessageTrans.buildMsg(msg, clientId);
+        BizFrame frame = MessageTrans.buildMsg(msg, clientId);
         try {
-            channel.writeAndFlush(byteBuf);
+            channel.writeAndFlush(frame);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {

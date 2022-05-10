@@ -3,6 +3,7 @@ package com.lingfeng.rpc.util;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -11,11 +12,13 @@ import java.util.List;
 /**
  * @author xuxueli 2020-04-11 20:56:31
  */
+@Slf4j
 public class GsonTool {
 
     private static Gson gson = null;
+
     static {
-            gson= new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+        gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
     }
 
     /**
@@ -36,7 +39,13 @@ public class GsonTool {
      * @return
      */
     public static <T> T fromJson(String json, Class<T> classOfT) {
-        return gson.fromJson(json, classOfT);
+        try {
+            return gson.fromJson(json, classOfT);
+        } catch (Exception e) {
+            log.error("[error json] {}", json);
+            log.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     /**
@@ -51,23 +60,30 @@ public class GsonTool {
         Type type = new ParameterizedType4ReturnT(classOfT, new Class[]{argClassOfT});
         return gson.fromJson(json, type);
     }
+
     public static class ParameterizedType4ReturnT implements ParameterizedType {
         private final Class raw;
         private final Type[] args;
+
         public ParameterizedType4ReturnT(Class raw, Type[] args) {
             this.raw = raw;
             this.args = args != null ? args : new Type[0];
         }
+
         @Override
         public Type[] getActualTypeArguments() {
             return args;
         }
+
         @Override
         public Type getRawType() {
             return raw;
         }
+
         @Override
-        public Type getOwnerType() {return null;}
+        public Type getOwnerType() {
+            return null;
+        }
     }
 
     /**
