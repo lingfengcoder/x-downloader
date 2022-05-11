@@ -69,7 +69,7 @@ public class MyServerHandler extends SimpleChannelInboundHandler<BizFrame> {
         }
         BizFrame frame2 = MessageTrans.buildMsg("服务端已收到消息", -1);
         ctx.writeAndFlush(frame2);
-        //ReferenceCountUtil.release(msg);
+        //channelRead0 不再需要 ReferenceCountUtil.release(msg);
     }
 
     @Override

@@ -30,12 +30,12 @@ public class Test {
                 .setHandler(handler1).setListener(new MyChannelFutureListener()).start();
 
 
-//        NettyClient client2 = new NettyClient();
-//        MyClientHandler handler2 = new MyClientHandler();
-//        client2.setAddress(new Address("127.0.0.1", 9999))
-//                .setHandler(handler2).setListener(new MyChannelFutureListener()).start();
+        NettyClient client2 = new NettyClient();
+        MyClientHandler handler2 = new MyClientHandler();
+        client2.setAddress(new Address("127.0.0.1", 9999))
+                .setHandler(handler2).setListener(new MyChannelFutureListener()).start();
 
-        TimeUnit.SECONDS.sleep(5);
+        TimeUnit.SECONDS.sleep(8);
         int x = 100;
         int finalX = x;
         new Thread(() -> {
@@ -64,29 +64,29 @@ public class Test {
         }).start();
 
 
-//        new Thread(() -> {
-//            for (int i = 0; i < x; i++) {
-//                try {
-//                    // TimeUnit.MILLISECONDS.sleep(5000);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//                String data = null;
-//                try {
-//                    data = "[client1] bbq-" + i;
-//                    handler2.write(data);
-//                } catch (Exception e) {
-//                    log.info("发送{} 失败", data);
-//                    // log.error(e.getMessage(), e);
-//                    try {
-//                        TimeUnit.MILLISECONDS.sleep(2000);
-//                    } catch (InterruptedException interruptedException) {
-//                        interruptedException.printStackTrace();
-//                    }
-//                    i--;
-//                }
-//            }
-//        }).start();
+        new Thread(() -> {
+            for (int i = 0; i < x; i++) {
+                try {
+                    // TimeUnit.MILLISECONDS.sleep(5000);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                String data = null;
+                try {
+                    data = "[client1] bbq-" + i;
+                    handler2.write(data);
+                } catch (Exception e) {
+                    log.info("发送{} 失败", data);
+                    // log.error(e.getMessage(), e);
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(2000);
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    }
+                    i--;
+                }
+            }
+        }).start();
 
 
         //TimeUnit.SECONDS.sleep(5);

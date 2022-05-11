@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.lingfeng.rpc.trans.BizDecoder.*;
 import static java.lang.Thread.State.TERMINATED;
 
 /**
@@ -89,7 +90,7 @@ public class NettyServer implements Server {
                                 //给pipeline管道设置处理器
                                 //new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,12,4,0,0)
                                 ChannelPipeline pipeline = socketChannel.pipeline();
-                                pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 1, 4, 0, 0));
+                                pipeline.addLast(new LengthFieldBasedFrameDecoder(MAXFRAMELENGTH, LENGTHFIELDOFFSET, LENGTHFIELDLENGTH, LENGTHADJUSTMENT, INITIALBYTESTOSTRIP));
                                 pipeline.addLast(new BizDecoder());
                                 pipeline.addLast(new BizEncoder());
                                 pipeline.addLast(serverHandler);

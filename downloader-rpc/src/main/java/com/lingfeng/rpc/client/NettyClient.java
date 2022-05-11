@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.lingfeng.rpc.trans.BizDecoder.*;
 import static java.lang.Thread.State.TERMINATED;
 
 /**
@@ -90,8 +91,7 @@ public class NettyClient implements Client {
                             @Override
                             protected void initChannel(SocketChannel ch) throws Exception {
                                 ChannelPipeline pipeline = ch.pipeline();
-                                pipeline.addLast(new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE, 1, 4, 0, 0));
-                                pipeline.addLast(new LoggingHandler());
+                                pipeline.addLast(new LengthFieldBasedFrameDecoder(MAXFRAMELENGTH, LENGTHFIELDOFFSET, LENGTHFIELDLENGTH, LENGTHADJUSTMENT, INITIALBYTESTOSTRIP));
                                 pipeline.addLast(new BizDecoder());
                                 pipeline.addLast(new BizEncoder());
                                 //添加客户端通道的处理器

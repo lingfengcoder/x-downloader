@@ -14,8 +14,11 @@ import java.nio.charset.StandardCharsets;
 public class BizEncoder extends MessageToByteEncoder<BizFrame> {
     @Override
     protected void encode(ChannelHandlerContext ctx, BizFrame bizFrame, ByteBuf out) throws Exception {
-        out.writeByte(bizFrame.getType());
-        out.writeInt(bizFrame.getLength());
-        out.writeBytes(bizFrame.getContent().getBytes(StandardCharsets.UTF_8));
+        byte[] bytes = bizFrame.getContent().getBytes(StandardCharsets.UTF_8);
+        bizFrame.setLength(bytes.length);
+
+        out.writeByte(bizFrame.getType());//1
+        out.writeInt(bytes.length);//4
+        out.writeBytes(bytes);//len
     }
 }
