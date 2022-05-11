@@ -1,23 +1,18 @@
 package com.lingfeng.rpc.server;
 
+import com.lingfeng.rpc.coder.Coder;
+import com.lingfeng.rpc.coder.CoderFactory;
+import com.lingfeng.rpc.coder.safe.SafeCoder;
 import com.lingfeng.rpc.model.Address;
-import com.lingfeng.rpc.trans.BizDecoder;
-import com.lingfeng.rpc.trans.BizEncoder;
+import com.lingfeng.rpc.server.handler.BaseServerHandler;
+import com.lingfeng.rpc.util.SnowFlake;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetAddress;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.lingfeng.rpc.trans.BizDecoder.*;
 import static java.lang.Thread.State.TERMINATED;
 
 /**
@@ -28,7 +23,6 @@ import static java.lang.Thread.State.TERMINATED;
 @Slf4j
 public class NettyServer implements Server {
 
-    private final static AtomicInteger idStore = new AtomicInteger(0);
 
     private final static String PREFIX = "Biz-NettyServer:";
     //服务线程
@@ -36,7 +30,7 @@ public class NettyServer implements Server {
     //服务地址
     private volatile Address address;
     //服务id
-    private final int serverId = idStore.addAndGet(1);
+    private final long serverId = SnowFlake.next();
     //服务状态
     private volatile int state = 0;//0 close 1 run 2 idle
     //任务处理器
@@ -64,8 +58,8 @@ public class NettyServer implements Server {
             }
         }
         //设置serverId
-        if (serverHandler instanceof MyServerHandler) {
-            ((MyServerHandler) serverHandler).setServerId(serverId);
+        if (serverHandler instanceof BaseServerHandler) {
+            ((BaseServerHandler) serverHandler).setServer(this);
         }
 
         mainThread = new Thread(() -> {
@@ -90,9 +84,12 @@ public class NettyServer implements Server {
                                 //给pipeline管道设置处理器
                                 //new LengthFieldBasedFrameDecoder(Integer.MAX_VALUE,12,4,0,0)
                                 ChannelPipeline pipeline = socketChannel.pipeline();
-                                pipeline.addLast(new LengthFieldBasedFrameDecoder(MAXFRAMELENGTH, LENGTHFIELDOFFSET, LENGTHFIELDLENGTH, LENGTHADJUSTMENT, INITIALBYTESTOSTRIP));
-                                pipeline.addLast(new BizDecoder());
-                                pipeline.addLast(new BizEncoder());
+                                //通过工厂添加编码器
+                                CoderFactory factory = CoderFactory.getInstance();
+                                Coder generate = factory.generate(SafeCoder.class);
+                                pipeline.addLast(generate.type());
+                                pipeline.addLast(generate.decode());
+                                pipeline.addLast(generate.encode());
                                 pipeline.addLast(serverHandler);
                             }
                         });//给workerGroup的EventLoop对应的管道设置处理器
@@ -150,5 +147,13 @@ public class NettyServer implements Server {
     public NettyServer setServerHandler(ChannelInboundHandlerAdapter serverHandler) {
         this.serverHandler = serverHandler;
         return this;
+    }
+
+    public int state() {
+        return state;
+    }
+
+    public long getServerId() {
+        return serverId;
     }
 }

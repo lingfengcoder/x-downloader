@@ -48,6 +48,7 @@ public class GsonTool {
         return null;
     }
 
+
     /**
      * json 转成 特定的 rawClass<classOfT> 的Object
      *

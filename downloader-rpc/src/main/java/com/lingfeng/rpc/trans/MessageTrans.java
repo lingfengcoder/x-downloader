@@ -1,14 +1,17 @@
 package com.lingfeng.rpc.trans;
 
-import com.lingfeng.rpc.model.Message;
-import com.lingfeng.rpc.model.MessageType;
-import com.lingfeng.rpc.store.MessageStore;
-import com.lingfeng.rpc.util.GsonTool;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.util.CharsetUtil;
-import io.netty.util.internal.StringUtil;
+import com.lingfeng.rpc.coder.safe.SubReqFrame;
+import com.lingfeng.rpc.constant.EncryptType;
+import com.lingfeng.rpc.constant.Cmd;
+import com.lingfeng.rpc.constant.SerialType;
+import com.lingfeng.rpc.frame.SafeFrame;
+
+
+import com.lingfeng.rpc.sign.Signature;
+import com.lingfeng.rpc.util.SystemClock;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.Serializable;
 
 /**
  * @Author: wz
@@ -17,44 +20,73 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MessageTrans {
+    //默认加密方式
+    private final static byte DEFAULT_ENCRYPT = EncryptType.NONE.code();
+    //默认采用java序列化
+    private final static byte DEFAULT_SERIAL = SerialType.JAVA_SERIAL.code();
+    private final static String HEARTBEAT_CONTENT = "heart-beat";
 
-
-    public static Message<Object> trans(String msg) {
-        return GsonTool.fromJson(msg, Message.class);
+    //心跳帧
+    public static SafeFrame<String> heartbeatFrame(long clientId) {
+        SafeFrame<String> safeFrame = new SafeFrame<String>()
+                //心跳
+                .setCmd(Cmd.HEARTBEAT.code())
+                //序列化方式
+                .setSerial(SerialType.STRING_SERIAL.code())
+                //加密方式
+                .setEncrypt(DEFAULT_ENCRYPT)
+                //时间戳
+                .setTimestamp(SystemClock.now())
+                //客户端id
+                .setClient(clientId)
+                //内容
+                .setContent(HEARTBEAT_CONTENT);
+        //签名
+        safeFrame.setSign(Signature.sign(safeFrame));
+        return safeFrame;
     }
 
-    public static BizFrame buildMsg(String data, int clientId) {
-        //note 增加消息编号
-        Long seq = MessageStore.getClientMsgSeq(clientId);
-        Message<Object> msg = Message.builder()
-                .time(System.currentTimeMillis())
-                .type(MessageType.MSG.getCode())
-                .clientId(clientId)
-                .seq(seq)
-                .data(data)
-                .build();
-        String s = GsonTool.toJson(msg);
-//        return Unpooled.copiedBuffer(s, CharsetUtil.UTF_8);
-        return BizFrame.build(s);
+
+    //数据帧
+    public static <T extends Serializable> SafeFrame<SubReqFrame<T>> dataFrame(T data, long clientId) {
+        SafeFrame<SubReqFrame<T>> safeFrame = new SafeFrame<SubReqFrame<T>>()
+                //心跳
+                .setCmd(Cmd.REQUEST.code())
+                //序列化方式
+                .setSerial(SerialType.JAVA_SERIAL.code())
+                //加密方式
+                .setEncrypt(DEFAULT_ENCRYPT)
+                //时间戳
+                .setTimestamp(SystemClock.now())
+                //客户端id
+                .setClient(clientId);
+        SubReqFrame<T> reqFrame = new SubReqFrame<>();
+        reqFrame.setData(data);
+        reqFrame.setClassname(data.getClass().getName());
+        safeFrame.setContent(reqFrame);
+        //签名
+        safeFrame.setSign(Signature.sign(safeFrame));
+        return safeFrame;
     }
 
-    public static Message<Object> parseStr(BizFrame frame) {
-        String msg = frame.getContent();
-        if (!StringUtil.isNullOrEmpty(msg)) {
-            try {
-                return trans(msg);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-        return null;
-    }
 
-    public static Message<Object> parseStr(ByteBuf byteBuf) {
-        String msg = byteBuf.toString(CharsetUtil.UTF_8);
-        if (!StringUtil.isNullOrEmpty(msg)) {
-            return trans(msg);
-        }
-        return null;
+    //认证帧
+    public static SafeFrame<String> authFrame(String pwd, long clientId) {
+        SafeFrame<String> safeFrame = new SafeFrame<String>()
+                //心跳
+                .setCmd(Cmd.AUTH.code())
+                //序列化方式
+                .setSerial(SerialType.STRING_SERIAL.code())
+                //加密方式
+                .setEncrypt(DEFAULT_ENCRYPT)
+                //时间戳
+                .setTimestamp(SystemClock.now())
+                //客户端id
+                .setClient(clientId)
+                //密码
+                .setContent(pwd);
+        //签名
+        safeFrame.setSign(Signature.sign(safeFrame));
+        return safeFrame;
     }
 }
