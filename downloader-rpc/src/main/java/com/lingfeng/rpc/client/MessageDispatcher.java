@@ -11,9 +11,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class MessageDispatcher {
-    public static void dispatcher(NettyClient client, Object msg) {
+    public static void dispatcher(Channel channel, NettyClient client, Object msg) {
         //MessageType type = MessageType.trans(msg.getType());
-        Channel channel = client.getChannel();
         long clientId = client.getClientId();
         log.info("[netty client id: {}] 收到服务端{}的消息：{}", clientId, channel.remoteAddress(), msg);
 //        switch (type) {

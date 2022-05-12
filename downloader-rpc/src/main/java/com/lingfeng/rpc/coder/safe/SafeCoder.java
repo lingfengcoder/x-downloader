@@ -29,6 +29,8 @@ public class SafeCoder implements Coder {
 
     @Override
     public ChannelInboundHandlerAdapter type() {
-        return new LengthFieldBasedFrameDecoder(MAXFRAMELENGTH, LENGTHFIELDOFFSET, LENGTHFIELDLENGTH, LENGTHADJUSTMENT, INITIALBYTESTOSTRIP);
+        return new SafeLengthFieldDecoder(MAXFRAMELENGTH, LENGTHFIELDOFFSET, LENGTHFIELDLENGTH, LENGTHADJUSTMENT, INITIALBYTESTOSTRIP);
     }
+
+
 }

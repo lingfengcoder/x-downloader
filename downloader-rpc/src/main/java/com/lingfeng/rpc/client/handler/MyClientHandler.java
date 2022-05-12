@@ -1,7 +1,7 @@
 package com.lingfeng.rpc.client.handler;
 
-import com.lingfeng.rpc.client.nettyclient.BaseNettyClient;
 import com.lingfeng.rpc.client.MessageDispatcher;
+import com.lingfeng.rpc.client.nettyclient.NettyClient;
 import com.lingfeng.rpc.coder.safe.SubReqFrame;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.frame.SafeFrame;
@@ -21,18 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 @Accessors(chain = true)
 @ChannelHandler.Sharable
-public class MyClientHandler extends BaseClientHandler<SafeFrame<SubReqFrame<?>>> {
-
-    @Override
-    public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelRegistered(ctx);
-        this.setChannel(ctx);
-        log.info("[netty client id: {}] 客户端注册", getClientId());
-    }
+public class MyClientHandler extends AbsClientHandler<SafeFrame<SubReqFrame<?>>> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<SubReqFrame<?>> frame) throws Exception {
-        this.setChannel(ctx);
+        NettyClient client = getClient();
+//        client.defaultChannel(ctx.channel());
         int hashCode = ctx.hashCode();
         //接收服务端发送过来的消息
 //        Message<Object> message = MessageTrans.parseStr((ByteBuf) msg);
@@ -42,35 +36,10 @@ public class MyClientHandler extends BaseClientHandler<SafeFrame<SubReqFrame<?>>
                 SubReqFrame<?> content = frame.getContent();
                 log.info("client TempData = {}", content);
                 //对消息进行分发处理
-                MessageDispatcher.dispatcher(getClient(), frame.getContent());
+                MessageDispatcher.dispatcher(ctx.channel(), getClient(), frame.getContent());
             }
         }
-        // ReferenceCountUtil.release(msg);
     }
 
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        super.exceptionCaught(ctx, cause);
-        log.error("[netty client id: {}] exceptionCaught 客户端 error= {}", getClientId(), cause.getMessage(), cause);
-        BaseNettyClient client = getClient();
-        client.close();
-        client.restart();
-    }
-
-
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        super.channelUnregistered(ctx);
-        log.info("[netty client id: {}]=== channelUnregistered ===", getClientId());
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-        log.info("[netty client id: {}] === channelInactive ===", getClientId());
-        BaseNettyClient client = getClient();
-        client.close();
-        client.restart();
-    }
 
 }

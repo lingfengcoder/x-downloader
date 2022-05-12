@@ -60,7 +60,7 @@ public class Signature {
             if (sval.endsWith("&")) {
                 sval = sval.substring(0, sval.length() - 1);
             }
-            log.info("签名前数据：{}", sval);
+//            log.info("签名前数据：{}", sval);
             return MD5Util.md5_32(sval);
         }
         return null;

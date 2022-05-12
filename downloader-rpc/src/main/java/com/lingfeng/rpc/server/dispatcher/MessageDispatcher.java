@@ -1,4 +1,4 @@
-package com.lingfeng.rpc.server;
+package com.lingfeng.rpc.server.dispatcher;
 
 
 import com.lingfeng.rpc.model.MessageType;
