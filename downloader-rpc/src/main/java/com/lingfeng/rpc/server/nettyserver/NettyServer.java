@@ -1,17 +1,16 @@
 package com.lingfeng.rpc.server.nettyserver;
 
-
 import com.lingfeng.rpc.constant.Cmd;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 
 public interface NettyServer {
 
     int state();
+
 
     void start();
 
@@ -19,9 +18,18 @@ public interface NettyServer {
 
     void stop();
 
-    NettyServer addHandler(ChannelHandler handler, String name);
-
-    <F extends Future<?>> NettyServer addListener(GenericFutureListener<F> listener);
+    long getServerId();
 
     <M extends Serializable> void writeAndFlush(Channel channel, M msg, Cmd type);
+
+    void addChannel(String clientId, Channel channel);
+
+    Channel findChanel(String clientId);
+
+    void closeChannel(String clientId);
+
+    void showChannels();
+
+    Collection<Channel> allChannels();
+
 }

@@ -14,12 +14,8 @@ public interface NettyClient {
 
     int state();
 
-    void config(Consumer<NettyClient> consumer);
-
     void start();
 
-    //totalTime:ms 总时间内 perTime+unit=重试频率
-    void restart(long totalTime, TimeUnit unit, long perTime);
 
     void restart();
 
@@ -29,9 +25,6 @@ public interface NettyClient {
 
     void defaultChannel(Channel channel);
 
-    NettyClient addHandler(ChannelHandler handler, String name);
-
-    <F extends Future<?>> NettyClient addListener(GenericFutureListener<F> listener);
 
     <M extends Serializable> void writeAndFlush(Channel channel, M msg, Cmd type);
 //     保留接口 <M extends Serializable> void writeAndFlush(M msg, Cmd type);

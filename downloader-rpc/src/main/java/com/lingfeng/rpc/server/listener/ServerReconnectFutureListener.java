@@ -1,6 +1,6 @@
 package com.lingfeng.rpc.server.listener;
 
-import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
+import com.lingfeng.rpc.server.nettyserver.NettyServer;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.EventLoop;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 //重连-监听器
 public class ServerReconnectFutureListener implements ChannelFutureListener {
 
-    private volatile BizNettyServer server;
+    private volatile NettyServer server;
 
     @Override
     public void operationComplete(ChannelFuture channelFuture) throws Exception {
@@ -36,11 +36,11 @@ public class ServerReconnectFutureListener implements ChannelFutureListener {
         }, 1L, TimeUnit.SECONDS);
     }
 
-    public BizNettyServer getServer() {
+    public NettyServer getServer() {
         return server;
     }
 
-    public void setServer(BizNettyServer server) {
+    public void setServer(NettyServer server) {
         this.server = server;
     }
 }

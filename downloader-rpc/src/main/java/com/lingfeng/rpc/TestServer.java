@@ -1,11 +1,16 @@
 package com.lingfeng.rpc;
 
 
+import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.model.Address;
 import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
 import com.lingfeng.rpc.server.nettyserver.NettyServerFactory;
+import com.lingfeng.rpc.util.SystemClock;
+import com.lingfeng.rpc.util.TimeUtil;
+import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -22,6 +27,12 @@ public class TestServer {
         }
 
         while (server.state() == 1) {
+            log.info("bbq");
+            server.showChannels();
+            Collection<Channel> channels = server.allChannels();
+            for (Channel channel : channels) {
+                server.writeAndFlush(channel, "这是来自服务器的数据:" + TimeUtil.formatDate(SystemClock.now()), Cmd.REQUEST);
+            }
             TimeUnit.SECONDS.sleep(2);
         }
     }

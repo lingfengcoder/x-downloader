@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Description:
  */
 @Slf4j
-public class TestClient {
+public class TestClient2 {
     public static void main(String[] args) throws InterruptedException {
 
 

@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @Getter
 @Accessors(chain = true)
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class MyClientHandler extends AbsClientHandler<SafeFrame<SubReqFrame<?>>> {
 
     @Override
@@ -39,6 +39,7 @@ public class MyClientHandler extends AbsClientHandler<SafeFrame<SubReqFrame<?>>>
                 MessageDispatcher.dispatcher(ctx.channel(), getClient(), frame.getContent());
             }
         }
+        ctx.fireChannelRead(frame);
     }
 
 

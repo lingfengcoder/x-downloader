@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class HeartHandler extends AbsClientHandler<SafeFrame<String>> {
 
     public final static String NAME = "idleTimeoutHandler";

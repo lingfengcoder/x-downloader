@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * @Date: 2022/5/11 19:25
  * @Description:
  */
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class ServerIdleHandler extends IdleStateHandler {
 
     public final static String NAME = "idleStateHandler";

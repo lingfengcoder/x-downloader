@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Setter
 @Accessors(chain = true)
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class BizServerHandler extends AbsServerHandler<SafeFrame<Address>> {
 
     @Override
@@ -30,7 +30,6 @@ public class BizServerHandler extends AbsServerHandler<SafeFrame<Address>> {
         if (safeFrame != null) {
             long clientId = safeFrame.getClient();
             Channel channel = ctx.channel();
-            addChannel(clientId, channel);
             MessageDispatcher.dispatcher(clientId, safeFrame.getContent());
             writeAndFlush(channel, "服务端已收到消息", Cmd.REQUEST);
         } else {

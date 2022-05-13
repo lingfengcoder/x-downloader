@@ -1,6 +1,6 @@
 package com.lingfeng.rpc.client.handler;
 
-import com.lingfeng.rpc.client.nettyclient.BizNettyClient;
+import com.lingfeng.rpc.client.nettyclient.NettyClient;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.EventLoop;
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 //重连-监听器
 public class ReConnectFutureListener implements ChannelFutureListener {
 
-    private volatile BizNettyClient client;
+    private volatile NettyClient client;
 
 
     @Override
@@ -26,7 +26,6 @@ public class ReConnectFutureListener implements ChannelFutureListener {
             log.info("[netty client id: {}].isSuccess  ", clientId);
             return;
         } else {
-            ;
         }
         final EventLoop loop = channelFuture.channel().eventLoop();
         loop.schedule(() -> {
@@ -42,11 +41,11 @@ public class ReConnectFutureListener implements ChannelFutureListener {
         }, 1L, TimeUnit.SECONDS);
     }
 
-    public BizNettyClient getClient() {
+    public NettyClient getClient() {
         return client;
     }
 
-    public void setClient(BizNettyClient client) {
+    public void setClient(NettyClient client) {
         this.client = client;
     }
 }

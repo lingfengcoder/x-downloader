@@ -18,29 +18,30 @@ public class NettyClientFactory {
 
     public static <T> T generateClient(Address address, Class<T> clazz) {
         if (clazz.equals(BizNettyClient.class)) {
-            return (T) buildNettyClient(address);
+            return (T) buildBizNettyClient(address);
         }
         return null;
     }
 
-    private static BizNettyClient buildNettyClient(Address address) {
+    private static BizNettyClient buildBizNettyClient(Address address) {
         BizNettyClient client = new BizNettyClient();
         client.setAddress(address);
+        //通过配置的方式，可以保证每次重启都获取新的handler对象 ,从而避免了@Sharable
         client.config(_client -> {
-            CoderFactory coderFactory = CoderFactory.getInstance();
-            Coder generate = coderFactory.generate(SafeCoder.class);
             //coder 不允许共享需要单独添加
             //自定义传输协议
+            CoderFactory coderFactory = CoderFactory.getInstance();
+            Coder generate = coderFactory.generate(SafeCoder.class);
             _client
-                    .addHandler(generate.type(), null)
-                    .addHandler(generate.decode(), null)
-                    .addHandler(generate.encode(), null)
+                    .addHandler(generate.type())
+                    .addHandler(generate.decode())
+                    .addHandler(generate.encode())
                     //空闲处理器
-                    .addHandler(IdleHandler.getIdleHandler(), IdleHandler.NAME)
+                    .addHandler(IdleHandler.getIdleHandler())
                     //心跳处理器
-                    .addHandler(new HeartHandler(), HeartHandler.NAME)// HeartHandler.NAME
+                    .addHandler(new HeartHandler())// HeartHandler.NAME
                     //业务处理器
-                    .addHandler(new MyClientHandler(), null)
+                    .addHandler(new MyClientHandler())
                     //监听器
                     .addListener(new ReConnectFutureListener());
         });

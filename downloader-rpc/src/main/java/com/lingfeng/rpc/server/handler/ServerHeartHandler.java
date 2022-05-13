@@ -1,11 +1,10 @@
 package com.lingfeng.rpc.server.handler;
 
 
-import com.lingfeng.rpc.client.nettyclient.NettyClient;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.constant.State;
 import com.lingfeng.rpc.frame.SafeFrame;
-import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
+import com.lingfeng.rpc.server.nettyserver.NettyServer;
 import io.netty.channel.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
-@ChannelHandler.Sharable
+//@ChannelHandler.Sharable
 public class ServerHeartHandler extends AbsServerHandler<SafeFrame<String>> {
     public final static String NAME = "idleTimeoutHandler";
 
@@ -30,9 +29,14 @@ public class ServerHeartHandler extends AbsServerHandler<SafeFrame<String>> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        BizNettyServer server = getServer();
+        NettyServer server = getServer();
         long serverId = server.getServerId();
+        ChannelId id = ctx.channel().id();
+        //加入channel
+        server.addChannel(id.asLongText(), ctx.channel());
+
         resetLoss();
+
         log.info("[netty server id: {}] 激活成功", serverId);
         super.channelActive(ctx);
     }
@@ -41,7 +45,7 @@ public class ServerHeartHandler extends AbsServerHandler<SafeFrame<String>> {
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
-            BizNettyServer server = getServer();
+            NettyServer server = getServer();
             long serverId = server.getServerId();
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.READER_IDLE) {
@@ -81,25 +85,11 @@ public class ServerHeartHandler extends AbsServerHandler<SafeFrame<String>> {
         //final EventLoop eventLoop = ctx.channel().eventLoop();
         // eventLoop.schedule(() -> getServer().restart(), 10L, TimeUnit.SECONDS);
         // loopRestart();
+        NettyServer server = getServer();
+        //关闭channel
+        server.closeChannel(ctx.channel().id().asLongText());
+        
         super.channelInactive(ctx);
-    }
-
-    private void loopRestart() {
-
-        log.info("[netty client id: {}] 开始重启", getServerId());
-        new Thread(() -> {
-            int retry = 0;
-            BizNettyServer server = getServer();
-            while (server.state() != State.RUNNING.code() && retry < MAX_RESTART_COUNT) {
-                server.restart();
-                try {
-                    TimeUnit.MILLISECONDS.sleep(1000);
-                } catch (InterruptedException e) {
-                    log.error(e.getMessage(), e);
-                }
-                retry++;
-            }
-        }).start();
     }
 
     @Override

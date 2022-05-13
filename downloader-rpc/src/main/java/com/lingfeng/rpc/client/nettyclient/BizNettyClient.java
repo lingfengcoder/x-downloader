@@ -1,25 +1,15 @@
 package com.lingfeng.rpc.client.nettyclient;
 
 
-import cn.hutool.core.thread.ThreadFactoryBuilder;
-import com.lingfeng.rpc.client.handler.AbsClientHandler;
-import com.lingfeng.rpc.client.handler.ReConnectFutureListener;
-import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.constant.State;
 import com.lingfeng.rpc.model.Address;
 import com.lingfeng.rpc.util.SystemClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import static java.lang.Thread.State.TERMINATED;
+import java.util.concurrent.*;
 
 /**
  * @Author: wz
@@ -29,160 +19,126 @@ import static java.lang.Thread.State.TERMINATED;
 @Slf4j
 public class BizNettyClient extends AbsNettyClient implements NettyClient {
 
-    private final static String THREAD_PREFIX = "Biz-NettyClient-Thread";
     //最大重启次数
     private static final int MAX_RESTART_TIME = 60000; //60*1000 1分钟内尝试重启60次
-
-    private volatile Thread mainThread = null;
-
-
+    //开始重启的时间点
+    private static volatile long restartBeginTime = 0;
+    //客户端读写线程池
     private volatile NioEventLoopGroup loopGroup;
+    //  主动中断使用的线程  private volatile Thread mainThread = null;
 
+    //只有一个线程在运行，形成客户端阻塞的状态,避免循环启动客户端
+    private final ScheduledExecutorService scheduled = new ScheduledThreadPoolExecutor(1, new ThreadPoolExecutor.AbortPolicy());
+    private volatile ScheduledFuture<?> scheduledFuture = null;
 
     //simple thread model 内置一个守护线程发送数据
-    private synchronized void start0(boolean isReload) {
-        Address address = getAddress();
+    private synchronized void start0() {
         log.info("[netty client id:{}] start0", clientId);
-        if (mainThread != null) {
-            //只有关闭的状态才能进行启动
-            if (state != State.CLOSED.code()) {
-                log.error("[netty client id:{}]！客户端启动失败 address={} state={}", clientId, address, State.trans(state).name());
-                return;
-                //关闭的状态但是主线程状态不是关闭态
-            } else if (state == State.CLOSED.code() && !mainThread.getState().equals(TERMINATED)) {
-                log.error("[netty client id:{}] 客户端启动失败 client mainThread 状态非停止！{}", clientId, mainThread.getState());
-                return;
-                //启动中的
-            } else if (state == State.STARTING.code()) {
-                log.warn("[netty client id:{}] 客户端启动中...", clientId);
-                return;
-            }
+        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            log.info("client线程已经在执行了");
+            return;
         }
-        //标明已经有线程在启动了
-        state = State.STARTING.code();
+        //客户端的守护线程
+        Runnable mainTask = mainTask();
+        scheduledFuture = scheduled.scheduleAtFixedRate(mainTask, 0, 1000, TimeUnit.MILLISECONDS);
+    }
 
-        mainThread = new Thread(() -> {
+    //状态控制器
+    private boolean stateCtrl() {
+        //只有关闭的状态才能进行启动
+        if (state != State.CLOSED.code()) {
+            if (state == State.STARTING.code()) {
+                log.warn("[netty client id:{}] 客户端启动中...", clientId);
+                return false;
+            } else if (state == State.CLOSED_NO_RETRY.code()) {
+                log.warn("[netty client id:{}] 客户端已经进入了 [关闭并不重启] 的状态,放弃重启...", clientId);
+                giveUpRestart();
+                return false;
+            }
+            Address address = getAddress();
+            log.error("[netty client id:{}]！客户端启动失败 address={} state={}", clientId, address, State.trans(state).name());
+            return false;
+        }
+        return true;
+    }
+
+
+    private Runnable mainTask() {
+        return () -> {
+            if (!stateCtrl()) return;
+            //标明客户端正在启动
+            state = State.STARTING.code();
+            //不建议复用NioEventLoopGroup 可能会造成大量的线程不能释放
             if (loopGroup == null || loopGroup.isShutdown() || loopGroup.isShuttingDown() || loopGroup.isTerminated()) {
                 loopGroup = new NioEventLoopGroup();
             }
             //创建bootstrap对象，配置参数
-            connectHandler(loopGroup);
-        });
-        if (mainThread != null) {
-            mainThread.setPriority(Thread.MAX_PRIORITY);
-            mainThread.setDaemon(true);
-            mainThread.setName(THREAD_PREFIX + ":" + mainThread.getId());
-            mainThread.start();
-        }
+            try {
+                log.info("doConnect");
+                Bootstrap bootstrap = new Bootstrap();
+                ChannelFuture channelFuture = doConnect(bootstrap, loopGroup);
+                //启动成功后，重置时间
+                restartBeginTime = 0;
+                // 可以主动中断 mainThread = Thread.currentThread();
+                //阻塞 wait
+                channelFuture.sync();
+                log.info("lost connect");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            } finally {
+                //如果是关闭并且不重启，放弃重启
+                if (state == State.CLOSED_NO_RETRY.code()) {
+                    giveUpRestart();
+                } else {
+                    //如果是从正常运行 突然关闭，那么就转换为关闭态
+                    //关闭态
+                    state = State.CLOSED.code();
+                    closeChannel();
+                    //关闭线程组
+                    closeThreadGroup();
+                    //进入重启
+                    enterRetry();
+                }
+            }
+        };
     }
 
-    private void connectHandler(EventLoopGroup eventLoopGroup) {
-        try {
-            Bootstrap bootstrap = new Bootstrap();
-            doConnect(bootstrap, eventLoopGroup);
-            //这里会阻塞
-            // channelFuture.sync();
-            log.info("doConnect");
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        } finally {
-            //如果是关闭并且不重启
-            if (state == State.CLOSED_NO_RETRY.code()) {
-                giveUp();
-            } else {
-                //关闭态
-                state = 0;
-                closeChannel();
-                closeThreadGroup();
-                //进入重试
-                restart();
+
+    //进入重启循环
+    private void enterRetry() {
+        //说明是从正常启动变为异常，进入重试流程
+        if (restartBeginTime == 0) {
+            restartBeginTime = SystemClock.now();
+        }
+        //如果超时,关闭定时任务
+        if (restartBeginTime > 0) {
+            if (SystemClock.now() - restartBeginTime > MAX_RESTART_TIME) {
+                giveUpRestart();
             }
         }
     }
 
     //放弃重试
-    private void giveUp() {
+    private void giveUpRestart() {
         //将状态设置为关闭并不重启
         state = State.CLOSED_NO_RETRY.code();
         closeChannel();
         //关闭线程组
         closeThreadGroup();
+        //关闭循环
+        cancelSchedule();
         loopGroup = null;
+        handlers.clear();
+        listeners.clear();
+        channel = null;
     }
 
-    private void closeThreadGroup() {
-        //关闭线程组
-        log.info("[netty client id:{}] 客户端关闭线程组", clientId);
-        loopGroup.shutdownGracefully();
-    }
-
-    private void close0() {
-        log.info("[netty client id:{}] 客户端关闭中....{}", clientId, address);
-        state = State.CLOSED_NO_RETRY.code();
-        mainThread.interrupt();
-    }
-
-    @Override
-    public int state() {
-        return state;
-    }
-
-
-    @Override
-    public void start() {
-        start0(false);
-    }
-
-    @Override
-    public void restart(long totalTime, TimeUnit unit, long pertime) {
-        log.info("[netty client id: {}] === restart ===", clientId);
-        restartLoop(totalTime, unit, pertime);
-    }
-
-    @Override
-    public void restart() {
-        log.info("[netty client id: {}] === restart ===", clientId);
-        restartLoop(MAX_RESTART_TIME, TimeUnit.MILLISECONDS, 1000);
-    }
-
-
-    private volatile Thread restartThread = null;
-    private final Object restartLock = new Object();
-
-    private void restartLoop(long totalTime, TimeUnit unit, long time) {
-        synchronized (restartLock) {
-            if (restartThread != null) {
-                return;
-            }
-            log.info("[netty client id: {}] 开始重启", getClientId());
-            restartThread = new Thread(() -> {
-                long start = SystemClock.now();
-                while (state() != State.RUNNING.code() && (SystemClock.now() - start) < totalTime) {
-                    start0(true);
-                    log.info("restartThread");
-                    try {
-                        unit.sleep(time);
-                        Channel channel = getChannel();
-                        if (channel != null && channel.isOpen()) {
-                            log.info("发送 test77788");
-                            writeAndFlush(channel, "test77788", Cmd.HEARTBEAT);
-                        }
-                    } catch (Exception e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-                restartThread = null;
-            });
-            restartThread.start();
+    private void cancelSchedule() {
+        //取消定时
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(true);
         }
     }
-
-
-    @Override
-    public void close() {
-        close0();
-    }
-
 
     protected void closeChannel() {
         if (channel != null) {
@@ -194,22 +150,84 @@ public class BizNettyClient extends AbsNettyClient implements NettyClient {
         }
     }
 
-    //增加处理器
-    public BizNettyClient addHandler(ChannelHandler handler, String name) {
-        handlers.add(handler);
-        if (handler instanceof AbsClientHandler) {
-            ((AbsClientHandler) handler).setClient(this);
+    private void closeThreadGroup() {
+        //关闭线程组
+        log.info("[netty client id:{}] 客户端关闭线程组", clientId);
+        if (loopGroup != null) {
+            loopGroup.shutdownGracefully();
         }
-        return this;
     }
 
-
-    //增加监听器
-    public <F extends Future<?>> BizNettyClient addListener(GenericFutureListener<F> listener) {
-        listeners.add(listener);
-        if (listener instanceof ReConnectFutureListener) {
-            ((ReConnectFutureListener) listener).setClient(this);
-        }
-        return this;
+    private void close0() {
+        log.info("[netty client id:{}] 客户端关闭中....{}", clientId, address);
+        //将状态设置为关闭并不重启
+        giveUpRestart();
     }
+
+    @Override
+    public int state() {
+        return state;
+    }
+
+    @Override
+    public void start() {
+        start0();
+    }
+
+    @Override
+    public void restart() {
+        //重置 结束时间并开启
+        log.info("[netty client id: {}]  restart ", clientId);
+        //重置重试时间
+        restartBeginTime = 0;
+        //为了避免schedule已经停止，主动再次
+        start0();
+    }
+
+    @Override
+    public void close() {
+        close0();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Object lock = new Object();
+        ScheduledExecutorService scheduled = new ScheduledThreadPoolExecutor(1, new ThreadPoolExecutor.AbortPolicy());
+        int x = 10;
+        final Thread[] bizthread = {null};
+        for (int i = 0; i < x; i++) {
+            int finalI = i;
+
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    Thread thread = Thread.currentThread();
+                    if (finalI == 1) {
+                        try {
+                            if (finalI == 1) {
+                                bizthread[0] = thread;
+                            }
+                            synchronized (lock) {
+                                log.info("thread={} 开始等待", thread);
+                                lock.wait();
+                                // log.info("lock wait 释放了");
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        log.info("thread={} 正常执行", thread);
+                    }
+                }
+            };
+
+            scheduled.scheduleAtFixedRate(runnable, 0, 2000, TimeUnit.MILLISECONDS);
+        }
+
+        while (true) {
+            TimeUnit.SECONDS.sleep(5);
+            log.info("开始中断");
+            bizthread[0].interrupt();
+        }
+    }
+
 }

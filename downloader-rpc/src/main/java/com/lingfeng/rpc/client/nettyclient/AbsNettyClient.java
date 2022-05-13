@@ -1,6 +1,8 @@
 package com.lingfeng.rpc.client.nettyclient;
 
 
+import com.lingfeng.rpc.client.handler.AbsClientHandler;
+import com.lingfeng.rpc.client.handler.ReConnectFutureListener;
 import com.lingfeng.rpc.coder.Coder;
 import com.lingfeng.rpc.coder.CoderFactory;
 import com.lingfeng.rpc.coder.safe.SafeCoder;
@@ -39,15 +41,15 @@ public abstract class AbsNettyClient implements NettyClient {
     protected volatile int state = 0;//0 close 1 run 2 starting
     //处理器集合
     protected final List<ChannelHandler> handlers = new ArrayList<>();
-
     //监听器集合
     protected volatile List<GenericFutureListener<? extends Future<?>>> listeners = new ArrayList<>();
 
-    private volatile Consumer<NettyClient> configFunction;
+    protected volatile Consumer<AbsNettyClient> configFunction;
+
     protected volatile Channel channel;
 
-    @Override
-    public void config(Consumer<NettyClient> consumer) {
+
+    public void config(Consumer<AbsNettyClient> consumer) {
         this.configFunction = consumer;
     }
 
@@ -59,10 +61,7 @@ public abstract class AbsNettyClient implements NettyClient {
 
     public ChannelFuture doConnect(Bootstrap bootstrap, EventLoopGroup eventLoopGroup) throws InterruptedException {
         if (bootstrap != null) {
-            //触发配置 保证每次初始化都是新的对象
-            handlers.clear();
-            listeners.clear();
-            configFunction.accept(this);
+            AbsNettyClient that = this;
             //设置线程组
             bootstrap.group(eventLoopGroup)
                     //设置客户端的通道实现类型
@@ -71,22 +70,19 @@ public abstract class AbsNettyClient implements NettyClient {
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
+                            //触发配置 保证每次初始化都是新的对象
+                            if (configFunction != null) {
+                                handlers.clear();
+                                listeners.clear();
+                                configFunction.accept(that);
+                            }
                             ChannelPipeline pipeline = ch.pipeline();
                             //注意添加顺序
                             for (ChannelHandler handler : handlers) {
                                 pipeline.addLast(handler);
                             }
-//                            for (Map.Entry<ChannelHandler, String> item : handlers.entrySet()) {
-//                                String name = item.getValue();
-//                                if (StringUtils.isNotEmpty(name)) {
-//                                    pipeline.addLast(name, item.getKey());
-//                                } else {
-//                                    pipeline.addLast(item.getKey());
-//                                }
-//                            }
                         }
                     });
-
             ChannelFuture channelFuture =
                     bootstrap.connect(address.getHost(), address.getPort()).sync();
             //注册监听者
@@ -108,9 +104,30 @@ public abstract class AbsNettyClient implements NettyClient {
             //启动成功！
             state = State.RUNNING.code();
             //对通道关闭进行监听
-            channelFuture.channel().closeFuture().sync();
+            return channelFuture.channel()
+                    .closeFuture();
+            //.sync();
         }
         return null;
+    }
+
+    //增加处理器
+    public AbsNettyClient addHandler(ChannelHandler handler) {
+        handlers.add(handler);
+        if (handler instanceof AbsClientHandler) {
+            ((AbsClientHandler) handler).setClient(this);
+        }
+        return this;
+    }
+
+
+    //增加监听器
+    public <F extends Future<?>> AbsNettyClient addListener(GenericFutureListener<F> listener) {
+        listeners.add(listener);
+        if (listener instanceof ReConnectFutureListener) {
+            ((ReConnectFutureListener) listener).setClient(this);
+        }
+        return this;
     }
 
 
@@ -150,6 +167,7 @@ public abstract class AbsNettyClient implements NettyClient {
     }
 
     public <M extends Serializable> void writeAndFlush(M msg, Cmd type) {
+        accessClientState();
         accessChannel();
         writeAndFlush(channel, msg, type);
     }

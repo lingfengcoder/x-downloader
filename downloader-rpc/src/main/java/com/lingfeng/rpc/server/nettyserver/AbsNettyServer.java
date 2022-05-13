@@ -1,15 +1,13 @@
 package com.lingfeng.rpc.server.nettyserver;
 
 
-import com.lingfeng.rpc.coder.Coder;
-import com.lingfeng.rpc.coder.CoderFactory;
-import com.lingfeng.rpc.coder.safe.SafeCoder;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.constant.State;
 import com.lingfeng.rpc.model.Address;
+import com.lingfeng.rpc.server.handler.AbsServerHandler;
+import com.lingfeng.rpc.server.listener.ServerReconnectFutureListener;
 import com.lingfeng.rpc.trans.MessageTrans;
 import com.lingfeng.rpc.util.SnowFlake;
-import com.lingfeng.rpc.util.StringUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
@@ -20,9 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 
 /**
@@ -38,21 +37,71 @@ public abstract class AbsNettyServer implements NettyServer {
     //服务id
     protected final long serverId = SnowFlake.next();
     //服务状态
-    protected volatile int state = 0;//0 close 1 run 2 idle
+    protected volatile int state = 0;//State.class
     //处理器集合
-    protected final Map<ChannelHandler, String> handlers = new HashMap<>();
+    protected volatile List<ChannelHandler> handlers = new ArrayList<>();
     //监听器集合
     protected volatile List<GenericFutureListener<? extends Future<?>>> listeners = new ArrayList<>();
 
+    protected volatile Consumer<AbsNettyServer> configFunction;
+
     protected volatile Channel defaultChannel;
 
+    //连接通道的集合
+    protected final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
+
+    @Override
+    public void showChannels() {
+        log.info("[当前服务器中存活的channel] {}", channels);
+    }
+
+    @Override
+    public Collection<Channel> allChannels() {
+        return this.channels.values();
+    }
+
+    @Override
+    public void closeChannel(String clientId) {
+        Channel channel = channels.get(clientId);
+        if (channel != null) {
+            log.info(" [closeChannel] 关闭  channel {}", clientId);
+            channel.close();
+            channels.remove(clientId);
+        } else {
+            log.info("channel 不在缓存中 clientId={}", clientId);
+        }
+    }
+
+    //关闭所有的连接
+    protected void closeAllChannel() {
+        for (Channel channel : channels.values()) {
+            channel.close();
+        }
+    }
+
+    @Override
+    public void addChannel(String clientId, Channel channel) {
+        if (!channels.containsKey(clientId)) {
+            channels.put(clientId, channel);
+        }
+    }
+
+    @Override
+    public Channel findChanel(String clientId) {
+        return channels.get(clientId);
+    }
+
+    //@Override
+    public void config(Consumer<AbsNettyServer> config) {
+        this.configFunction = config;
+    }
+
     /**
-     * netty client 连接，连接失败5秒后重试连接
+     * netty server 连接，连接失败5秒后重试连接
      */
-    // EventLoopGroup bossGroup = new NioEventLoopGroup();
-    //            EventLoopGroup workerGroup = new NioEventLoopGroup();
-    public ServerBootstrap doConnect(ServerBootstrap bootstrap, EventLoopGroup bossGroup, EventLoopGroup workerGroup) throws InterruptedException {
+    public ChannelFuture doConnect(ServerBootstrap bootstrap, EventLoopGroup bossGroup, EventLoopGroup workerGroup) throws InterruptedException {
         if (bootstrap != null) {
+            AbsNettyServer that = this;
             //创建服务端的启动对象，设置参数
             //设置两个线程组boosGroup和workerGroup
             bootstrap.group(bossGroup, workerGroup)
@@ -66,22 +115,16 @@ public abstract class AbsNettyServer implements NettyServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
+                            log.info("initChannel ========= {}", socketChannel.hashCode());
+                            if (configFunction != null) {
+                                log.info(" configFunction! = null");
+                                handlers.clear();
+                                listeners.clear();
+                                configFunction.accept(that);
+                            }
                             ChannelPipeline pipeline = socketChannel.pipeline();
-
-                            CoderFactory coderFactory = CoderFactory.getInstance();
-                            Coder generate = coderFactory.generate(SafeCoder.class);
-                            //自定义传输协议 coder 不允许共享 每次只能重新new
-                            pipeline.addLast(generate.type());
-                            pipeline.addLast(generate.decode());
-                            pipeline.addLast(generate.encode());
-
-                            for (Map.Entry<ChannelHandler, String> item : handlers.entrySet()) {
-                                String name = item.getValue();
-                                if (StringUtils.isNotEmpty(name)) {
-                                    pipeline.addLast(name, item.getKey());
-                                } else {
-                                    pipeline.addLast(item.getKey());
-                                }
+                            for (ChannelHandler handler : handlers) {
+                                pipeline.addLast(handler);
                             }
                         }
                     });//给workerGroup的EventLoop对应的管道设置处理器
@@ -95,11 +138,12 @@ public abstract class AbsNettyServer implements NettyServer {
             }
             //channel
             defaultChannel = channelFuture.channel();
-            state = 1;
+            state = State.RUNNING.code();
             //对关闭通道进行监听
-            channelFuture.channel().closeFuture().sync();
+            return channelFuture.channel().closeFuture();
+            //.sync();
         }
-        return bootstrap;
+        return null;
     }
 
     public int state() {
@@ -111,7 +155,9 @@ public abstract class AbsNettyServer implements NettyServer {
     }
 
     protected void closeChannel() {
-        defaultChannel.close();
+        if (defaultChannel != null) {
+            defaultChannel.close();
+        }
     }
 
     public Channel getChannel() {
@@ -149,4 +195,22 @@ public abstract class AbsNettyServer implements NettyServer {
         }
     }
 
+    //增加处理器
+    // @Override
+    public AbsNettyServer addHandler(ChannelHandler handler) {
+        handlers.add(handler);
+        if (handler instanceof AbsServerHandler) {
+            ((AbsServerHandler) handler).setServer(this);
+        }
+        return this;
+    }
+
+    //增加监听器
+    public <F extends Future<?>> AbsNettyServer addListener(GenericFutureListener<F> listener) {
+        listeners.add(listener);
+        if (listener instanceof ServerReconnectFutureListener) {
+            ((ServerReconnectFutureListener) listener).setServer(this);
+        }
+        return this;
+    }
 }
