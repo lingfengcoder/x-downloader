@@ -20,7 +20,6 @@
         <module>downloader-log</module>
         <module>downloader-bizpool</module>
         <module>downloader-rpc</module>
-        <module>downloader-register</module>
     </modules>
 
 
