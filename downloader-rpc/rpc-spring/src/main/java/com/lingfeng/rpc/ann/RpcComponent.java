@@ -1,4 +1,4 @@
-package com.lingfeng.rpc.client.ann;
+package com.lingfeng.rpc.ann;
 
 import org.springframework.stereotype.Component;
 

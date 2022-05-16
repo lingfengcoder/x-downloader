@@ -85,9 +85,10 @@ public class ServerHeartHandler extends AbsServerHandler<SafeFrame<String>> {
         // eventLoop.schedule(() -> getServer().restart(), 10L, TimeUnit.SECONDS);
         // loopRestart();
         NettyServer server = getServer();
+        ctx.alloc();
         //关闭channel
         server.closeChannel(ctx.channel().id().asLongText());
-        
+
         super.channelInactive(ctx);
     }
 

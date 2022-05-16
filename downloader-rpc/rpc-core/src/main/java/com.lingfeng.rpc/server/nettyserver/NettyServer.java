@@ -33,5 +33,8 @@ public interface NettyServer {
 
     void showChannels();
 
+    void setDefaultChannelContext(ChannelHandlerContext channelContext);
+
+    ChannelHandlerContext getDefaultChannelContext();
 
 }

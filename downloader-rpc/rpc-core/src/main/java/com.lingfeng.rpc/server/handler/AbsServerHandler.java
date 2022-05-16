@@ -30,6 +30,8 @@ public abstract class AbsServerHandler<T> extends SimpleChannelInboundHandler<T>
     //管道被激活的时候
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         this.setChannel(ctx);
+        NettyServer server = getServer();
+        server.setDefaultChannelContext(ctx);
         super.channelActive(ctx);
     }
 

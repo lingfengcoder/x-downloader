@@ -3,7 +3,7 @@ package com.lingfeng.rpc.util.relfect;
 
 import com.lingfeng.rpc.util.StringUtils;
 import com.lingfeng.rpc.util.TimeUtil;
-import org.springframework.util.Assert;
+ 
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -59,7 +59,7 @@ public class Convert {
 
 
     public static <T> T strToObject(String value, Class<T> tarType) {
-        Assert.notNull(value, "Source must not be null");
+        //Assert.notNull(value, "Source must not be null");
         if (tarType == String.class) {
             return (T) value;
         } else if (tarType == Integer.class || tarType == int.class) {

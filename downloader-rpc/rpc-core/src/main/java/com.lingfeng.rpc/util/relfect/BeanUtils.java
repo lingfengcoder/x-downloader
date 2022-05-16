@@ -1,8 +1,6 @@
 package com.lingfeng.rpc.util.relfect;
 
 
-import org.springframework.util.Assert;
-
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -42,8 +40,8 @@ public class BeanUtils {
 
 
     public static boolean fieldSameType(Field srcField, Field tarField) {
-        Assert.notNull(srcField, "Source must not be null");
-        Assert.notNull(tarField, "Source must not be null");
+        //Assert.notNull(srcField, "Source must not be null");
+        //Assert.notNull(tarField, "Source must not be null");
         //属性名字相同
         if (tarField.getType().equals(srcField.getType())) {
             return true;
@@ -55,8 +53,8 @@ public class BeanUtils {
     }
 
     public static boolean fieldSameName(Field srcField, Field tarField) {
-        Assert.notNull(srcField, "Source must not be null");
-        Assert.notNull(tarField, "Source must not be null");
+        //Assert.notNull(srcField, "Source must not be null");
+        //Assert.notNull(tarField, "Source must not be null");
         //属性名字相同
         if (srcField.getName().equalsIgnoreCase(tarField.getName())) {
             return true;
@@ -65,8 +63,8 @@ public class BeanUtils {
     }
 
     public static boolean classSameType(Class srcClazz, Class tarClazz) {
-        Assert.notNull(srcClazz, "Source must not be null");
-        Assert.notNull(tarClazz, "Source must not be null");
+        //Assert.notNull(srcClazz, "Source must not be null");
+        //Assert.notNull(tarClazz, "Source must not be null");
         //属性名字相同
         if (srcClazz.equals(tarClazz)) {
             return true;
@@ -85,7 +83,7 @@ public class BeanUtils {
      * @return 对象的setter方法列表
      */
     public static List<Method> getSetterMethods(Object obj) {
-        Assert.notNull(obj, "Source must not be null");
+        //Assert.notNull(obj, "Source must not be null");
         // setter方法列表
         List<Method> setterMethods = new ArrayList<>();
         // 获取所有方法
@@ -109,7 +107,7 @@ public class BeanUtils {
      */
 
     public static List<Method> getGetterMethods(Object obj) {
-        Assert.notNull(obj, "Source must not be null");
+        //Assert.notNull(obj, "Source must not be null");
         // getter方法列表
         List<Method> getterMethods = new ArrayList<Method>();
         // 获取所有方法
@@ -135,8 +133,8 @@ public class BeanUtils {
      */
 
     public static boolean isMethodPropEquals(String m1, String m2) {
-        Assert.notNull(m1, "Source must not be null");
-        Assert.notNull(m2, "Target must not be null");
+        //Assert.notNull(m1, "Source must not be null");
+        //Assert.notNull(m2, "Target must not be null");
         return m1.substring(BEAN_METHOD_PROP_INDEX).equals(m2.substring(BEAN_METHOD_PROP_INDEX));
     }
 
@@ -149,7 +147,7 @@ public class BeanUtils {
      * @date: 2020/3/30 15:19
      */
     public static Field[] getAllFields(Object src) {
-        Assert.notNull(src, "Source must not be null");
+        //Assert.notNull(src, "Source must not be null");
         Field[] fields = {};
         List<Field> fieldList = new ArrayList<>();
         for (Class<?> superClass = src.getClass(); superClass != Object.class; superClass = superClass.getSuperclass()) {
@@ -170,8 +168,8 @@ public class BeanUtils {
      * @date: 2019/2/22 16:59
      */
     public static Object getValueByFieldName(Object srcObj, String fieldName) throws RuntimeException {
-        Assert.notNull(srcObj, "Source must not be null");
-        Assert.notNull(fieldName, "fieldName must not be null");
+        //Assert.notNull(srcObj, "Source must not be null");
+        //Assert.notNull(fieldName, "fieldName must not be null");
         try {
             PropertyDescriptor srcProp = new PropertyDescriptor(fieldName, srcObj.getClass());
             Method readMethod = srcProp.getReadMethod();//获得读方法
@@ -194,8 +192,8 @@ public class BeanUtils {
      * @date: 2019/2/22 17:05
      */
     public static void setValueByFieldName(Object srcObj, String fieldName, Object value) throws RuntimeException {
-        Assert.notNull(srcObj, "Source must not be null");
-        Assert.notNull(fieldName, "fieldName must not be null");
+        //Assert.notNull(srcObj, "Source must not be null");
+        //Assert.notNull(fieldName, "fieldName must not be null");
         try {
             PropertyDescriptor srcProp = new PropertyDescriptor(fieldName, srcObj.getClass());
             Method writeMethod = srcProp.getWriteMethod();//获得写方法
@@ -225,8 +223,8 @@ public class BeanUtils {
      * @date: 2020/12/26 11:33
      */
     public static void setMultiLevelProp(String propName, Object value, Object tarBean) throws IllegalArgumentException {
-        Assert.notNull(propName, "Source must not be null");
-        Assert.notNull(tarBean, "Target must not be null");
+        //Assert.notNull(propName, "Source must not be null");
+        //Assert.notNull(tarBean, "Target must not be null");
         if (propName.contains(".")) {
             String[] split = propName.split("\\.");
             //如果只有一层直接设置
@@ -308,8 +306,8 @@ public class BeanUtils {
      * @date: 2020/3/30 14:28
      */
     public static Object getValueByFieldNameAccess(Object srcObj, String fieldName) throws RuntimeException, IllegalAccessException {
-        Assert.notNull(srcObj, "Source must not be null");
-        Assert.notNull(fieldName, "fieldName must not be null");
+        //Assert.notNull(srcObj, "Source must not be null");
+        //Assert.notNull(fieldName, "fieldName must not be null");
         Class<?> srcObjClass = srcObj.getClass();
         Field[] srcObjClassFields = srcObjClass.getDeclaredFields();
         for (Field field : srcObjClassFields) {
@@ -341,8 +339,8 @@ public class BeanUtils {
      * @date: 2020/3/30 14:28
      */
     public static void setValueByFieldNameAccess(Object srcObj, String fieldName, Object value) throws RuntimeException, IllegalAccessException {
-        Assert.notNull(srcObj, "Source must not be null");
-        Assert.notNull(fieldName, "fieldName must not be null");
+        //Assert.notNull(srcObj, "Source must not be null");
+        //Assert.notNull(fieldName, "fieldName must not be null");
         Class<?> srcObjClass = srcObj.getClass();
         Field[] srcObjClassFields = srcObjClass.getDeclaredFields();
         for (Field field : srcObjClassFields) {

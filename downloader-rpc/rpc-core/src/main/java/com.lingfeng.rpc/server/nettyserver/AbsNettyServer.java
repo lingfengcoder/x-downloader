@@ -9,11 +9,14 @@ import com.lingfeng.rpc.server.listener.ServerReconnectFutureListener;
 import com.lingfeng.rpc.trans.MessageTrans;
 import com.lingfeng.rpc.util.SnowFlake;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroupFuture;
 import io.netty.channel.group.ChannelMatcher;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,8 @@ public abstract class AbsNettyServer implements NettyServer {
     protected volatile Consumer<AbsNettyServer> configFunction;
 
     protected volatile Channel defaultChannel;
+
+    protected volatile ChannelHandlerContext defaultContext;
 
     //连接通道的集合
     protected final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
@@ -175,24 +180,32 @@ public abstract class AbsNettyServer implements NettyServer {
     }
 
 
-    public <M extends Serializable> void writeAndFlush(ChannelHandlerContext channel, M msg, Cmd type) {
+    public <M extends Serializable> void writeAndFlush(ChannelHandlerContext ctx, M msg, Cmd type) {
+        Channel channel = ctx.channel();
+        if (!channel.isActive() && channel.isOpen()) {
+            throw new RuntimeException("[server] channel is not open or active！");
+        }
         //如果channel没有注册好 则循环等待
         accessClientState();
         // log.info("ctx hashCode={} [write]", channel.hashCode());
         switch (type) {
             case HEARTBEAT:
-                channel.writeAndFlush(MessageTrans.heartbeatFrame(getServerId()));
+                ctx.writeAndFlush(MessageTrans.heartbeatFrame(getServerId()));
                 break;
             case REQUEST:
-                channel.writeAndFlush(MessageTrans.dataFrame(msg, Cmd.REQUEST, getServerId()));
+                ctx.writeAndFlush(MessageTrans.dataFrame(msg, Cmd.REQUEST, getServerId()));
                 break;
             case RESPONSE:
-                channel.writeAndFlush(MessageTrans.dataFrame(msg, Cmd.RESPONSE, getServerId()));
+                ctx.writeAndFlush(MessageTrans.dataFrame(msg, Cmd.RESPONSE, getServerId()));
                 break;
         }
     }
 
     public <M extends Serializable> void writeAndFlush(Channel channel, M msg, Cmd type) {
+        if (!channel.isActive() && channel.isOpen()) {
+            throw new RuntimeException(" channel is not open or active！");
+            // return;
+        }
         //如果channel没有注册好 则循环等待
         accessClientState();
         // log.info("ctx hashCode={} [write]", channel.hashCode());
@@ -201,6 +214,7 @@ public abstract class AbsNettyServer implements NettyServer {
                 channel.writeAndFlush(MessageTrans.heartbeatFrame(getServerId()));
                 break;
             case REQUEST:
+                //ByteBuf buf = Unpooled.copiedBuffer("data", CharsetUtil.UTF_8);
                 channel.writeAndFlush(MessageTrans.dataFrame(msg, Cmd.REQUEST, getServerId()));
                 break;
             case RESPONSE:
@@ -214,7 +228,7 @@ public abstract class AbsNettyServer implements NettyServer {
     private void accessClientState() {
         // boolean removed = channel.isRemoved();
         if (State.RUNNING.code() != state) {
-            throw new RuntimeException("[netty server id: " + this.getServerId() + "] client state error, state=" + state);
+            throw new RuntimeException("[netty server id: " + this.getServerId() + "] client state error, state=" + State.trans(state));
         }
     }
 
@@ -235,5 +249,15 @@ public abstract class AbsNettyServer implements NettyServer {
             ((ServerReconnectFutureListener) listener).setServer(this);
         }
         return this;
+    }
+
+    @Override
+    public void setDefaultChannelContext(ChannelHandlerContext channelContext) {
+        this.defaultContext = channelContext;
+    }
+
+    @Override
+    public ChannelHandlerContext getDefaultChannelContext() {
+        return this.defaultContext;
     }
 }

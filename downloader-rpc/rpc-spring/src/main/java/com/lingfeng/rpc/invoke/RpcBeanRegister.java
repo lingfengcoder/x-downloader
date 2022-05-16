@@ -1,8 +1,8 @@
-package com.lingfeng.rpc.client.core;
+package com.lingfeng.rpc.invoke;
 
 
-import com.lingfeng.rpc.client.ann.RpcComponent;
-import com.lingfeng.rpc.client.ann.RpcHandler;
+import com.lingfeng.rpc.ann.RpcComponent;
+import com.lingfeng.rpc.ann.RpcHandler;
 import com.lingfeng.rpc.data.AnnHandler;
 import com.lingfeng.rpc.util.relfect.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;

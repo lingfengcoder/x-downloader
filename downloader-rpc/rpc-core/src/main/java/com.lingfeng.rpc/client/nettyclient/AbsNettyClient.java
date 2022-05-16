@@ -153,6 +153,10 @@ public abstract class AbsNettyClient implements NettyClient {
 
 
     public <M extends Serializable> void writeAndFlush(Channel channel, M msg, Cmd type) {
+        if (!channel.isActive() && channel.isOpen()) {
+            throw new RuntimeException(" channel is not open or active！");
+            // return;
+        }
         //如果channel没有注册好 则循环等待
         accessClientState();
         //  log.info("ctx hashCode={} [write]", channel.hashCode());
@@ -197,7 +201,7 @@ public abstract class AbsNettyClient implements NettyClient {
     private void accessClientState() {
         // boolean removed = channel.isRemoved();
         if (State.RUNNING.code() != state) {
-            throw new RuntimeException("[netty client id: " + this.getClientId() + "] client state error, state=" + state);
+            throw new RuntimeException("[netty client id: " + this.getClientId() + "] client state error, state=" + State.trans(state));
         }
     }
 

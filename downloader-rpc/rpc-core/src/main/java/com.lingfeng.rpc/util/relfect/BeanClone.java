@@ -1,9 +1,9 @@
 package com.lingfeng.rpc.util.relfect;
 
 
+import com.lingfeng.rpc.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
+
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static cn.hutool.core.bean.BeanUtil.copyProperties;
 import static com.lingfeng.rpc.util.relfect.BaseDataType.isBaseType;
 import static com.lingfeng.rpc.util.relfect.BeanUtils.*;
 import static com.lingfeng.rpc.util.relfect.Convert.strToObject;
@@ -25,13 +26,7 @@ import static com.lingfeng.rpc.util.relfect.ReflectUtils.getValueByField;
  * @Description:
  */
 @Slf4j
-public class BeanClone extends org.springframework.beans.BeanUtils {
-
-
-    public static void main(String[] args) throws Exception {
-
-
-    }
+public class BeanClone {
 
 
     /**
@@ -42,8 +37,7 @@ public class BeanClone extends org.springframework.beans.BeanUtils {
      * @date: 2020/12/26 12:09
      */
     public static void overwriteBeanProp(Map<String, Object> srcBean, Object tarBean) {
-        Assert.notNull(srcBean, "Source must not be null");
-        Assert.notNull(tarBean, "Target must not be null");
+
         Set<Map.Entry<String, Object>> array = srcBean.entrySet();
         for (Map.Entry<String, Object> item : array) {
             try {
@@ -88,8 +82,8 @@ public class BeanClone extends org.springframework.beans.BeanUtils {
      * @date: 2020/3/30 15:46
      */
     public static void copyByFields(Object src, Object tar, boolean deepCopy) throws RuntimeException {
-        Assert.notNull(src, "Source must not be null");
-        Assert.notNull(tar, "Target must not be null");
+//        Assert.notNull(src, "Source must not be null");
+//        Assert.notNull(tar, "Target must not be null");
         //递归获取本类及其父类的属性
         Field[] srcFields = getAllFields(src);
         Field[] tarFields = getAllFields(tar);
@@ -160,8 +154,6 @@ public class BeanClone extends org.springframework.beans.BeanUtils {
 
 
     public static void copyIgnoreTypeWithOtherNames(Object src, Object tar, boolean deepCopy) throws RuntimeException {
-        Assert.notNull(src, "Source must not be null");
-        Assert.notNull(tar, "Target must not be null");
         //递归获取本类及其父类的属性
         Field[] srcFields = getAllFields(src);
         Field[] tarFields = getAllFields(tar);
@@ -313,8 +305,6 @@ public class BeanClone extends org.springframework.beans.BeanUtils {
      * @date: 2019/2/22 15:12
      */
     public static <T> List<T> deepCopyListByJson(Object srcObj, Class<T> targetClass) {
-        Assert.notNull(srcObj, "Source must not be null");
-        Assert.notNull(targetClass, "targetClass must not be null");
         List<T> resultList = new ArrayList<>();
         //JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(srcObj));
 //        for (Object o : jsonArray) {
@@ -377,8 +367,8 @@ public class BeanClone extends org.springframework.beans.BeanUtils {
      * @date: 2020/4/24 15:21
      */
     public static void copyMapToObject(Map<?, ?> map, Object tar, boolean deepCopy) throws RuntimeException {
-        Assert.notNull(map, "Source must not be null");
-        Assert.notNull(tar, "Target must not be null");
+//        Assert.notNull(map, "Source must not be null");
+//        Assert.notNull(tar, "Target must not be null");
         try {
             //获取所有的fields
             Field[] tarFields = getAllFields(tar);

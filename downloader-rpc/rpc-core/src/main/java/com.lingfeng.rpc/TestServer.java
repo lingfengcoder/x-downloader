@@ -29,14 +29,14 @@ public class TestServer {
 
         while (server.state() == 1) {
 
-           // server.showChannels();
+            // server.showChannels();
             Collection<Channel> channels = server.allChannels();
             for (Channel channel : channels) {
                 DataFrame<String> frame = new DataFrame<>();
                 frame.setData("这是来自服务器的数据:" + TimeUtil.formatDate(SystemClock.now()));
                 server.writeAndFlush(channel, frame, Cmd.REQUEST);
             }
-           // TimeUnit.MILLISECONDS.sleep(200);
+            // TimeUnit.MILLISECONDS.sleep(200);
         }
     }
 }

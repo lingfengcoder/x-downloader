@@ -24,7 +24,7 @@ public class JavaSerializer implements ISerializer {
                     new ObjectOutputStream(byteArrayOutputStream);
 
             outputStream.writeObject(obj);
-
+            outputStream.flush();
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
             e.printStackTrace();

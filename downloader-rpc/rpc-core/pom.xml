@@ -7,29 +7,31 @@
         <groupId>lingfeng-biz</groupId>
         <version>1.0.0</version>
     </parent>
+
     <modelVersion>4.0.0</modelVersion>
+    <version>1.0.0</version>
 
+    <description>基于netty实现的rpc核心包</description>
     <artifactId>rpc-core</artifactId>
-
+    <properties>
+        <bouncycastle.version>1.66</bouncycastle.version>
+        <netty.version>4.1.58.Final</netty.version>
+    </properties>
     <dependencies>
+        <dependency>
+            <groupId>lingfeng-biz</groupId>
+            <artifactId>rpc-data</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>${netty-all.version}</version>
+            <version>${netty.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-            <version>${hutool-all.version}</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
         </dependency>
     </dependencies>
 </project>

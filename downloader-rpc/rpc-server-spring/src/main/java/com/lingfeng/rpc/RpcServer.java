@@ -8,7 +8,9 @@ import com.lingfeng.rpc.handler.NettyServerHandler;
 import com.lingfeng.rpc.model.Address;
 import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
 import com.lingfeng.rpc.server.nettyserver.NettyServerFactory;
+import com.lingfeng.rpc.util.SystemClock;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -21,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RpcServer {
-    AtomicInteger data = new AtomicInteger(RandomUtil.randomInt(90, 1000));
+    AtomicInteger data = new AtomicInteger();
 
     @PostConstruct
     public void init() {
@@ -30,19 +32,52 @@ public class RpcServer {
 
 
         new Thread(() -> {
+            long now = SystemClock.now();
             while (true) {
                 try {
-                    TimeUnit.SECONDS.sleep(5);
+                    TimeUnit.MILLISECONDS.sleep(0);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 int i = data.incrementAndGet();
                 Collection<Channel> channels = server.allChannels();
+                if (!channels.isEmpty()) {
+                    // testStringByCTX(server);
+                }
                 for (Channel channel : channels) {
                     testString(server, channel);
                 }
+                if ((SystemClock.now() - now) / 1000 > 5) {
+                    System.out.println("停止发送");
+                    System.out.println("停止发送");
+                    System.out.println("停止发送");
+                    System.out.println("停止发送");
+                    break;
+                }
             }
         }).start();
+
+        new Thread(() -> {
+            while (true) {
+                System.out.println(" data = " + data.get());
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+
+    private void testStringByCTX(BizNettyServer server) {
+        ChannelHandlerContext defaultChannelContext = server.getDefaultChannelContext();
+        Frame<Object> frame = new Frame<>();
+        frame.setTarget("bbq");
+        frame.setData(" clientId = " + data.incrementAndGet());
+        if (defaultChannelContext != null) {
+            server.writeAndFlush(defaultChannelContext, frame, Cmd.REQUEST);
+        }
     }
 
     private void testString(BizNettyServer server, Channel channel) {

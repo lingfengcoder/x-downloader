@@ -1,6 +1,5 @@
 package com.lingfeng.rpc.util.dae.md5;
 
-import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

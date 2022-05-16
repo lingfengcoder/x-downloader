@@ -4,6 +4,7 @@ import com.lingfeng.rpc.client.handler.AbsClientHandler;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.data.Frame;
 import com.lingfeng.rpc.frame.SafeFrame;
+import com.lingfeng.rpc.invoke.RpcInvokeProxy;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 

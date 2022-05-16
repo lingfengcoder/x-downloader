@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.lingfeng.rpc.client.core.RpcBeanRegister,\
+com.lingfeng.rpc.invoke.RpcBeanRegister,\
 com.lingfeng.rpc.client.RpcClient
 
