@@ -47,7 +47,7 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
             });
 
         } else {
-            ctx.fireChannelRead(data);
+           // ctx.fireChannelRead(data);
         }
     }
 }

@@ -21,14 +21,15 @@ public class RpcClient {
     @PostConstruct
     public void init() {
 
-        BizNettyClient client = NettyClientFactory.buildBizNettyClient(new Address("127.0.0.1", 9999), () -> Arrays.asList(new NettyReqHandler()));
+        BizNettyClient client = NettyClientFactory.buildBizNettyClient(new Address("127.0.0.1", 9999),
+                () -> Arrays.asList(new NettyReqHandler()));
         client.start();
 
         AtomicInteger data = new AtomicInteger(RandomUtil.randomInt(90, 1000));
         new Thread(() -> {
             while (true) {
                 try {
-                    TimeUnit.SECONDS.sleep(2);
+                    TimeUnit.SECONDS.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -37,6 +38,7 @@ public class RpcClient {
                 frame.setData("RPC Client data:" + i);
                 client.writeAndFlush(frame, Cmd.REQUEST);
             }
-        }).start();
+        });
+        //.start();
     }
 }

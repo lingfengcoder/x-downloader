@@ -22,7 +22,7 @@ public class NettyRespHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
                 log.info("resp:{}", ret);
             }, name, frame.getData());
         } else {
-            ctx.fireChannelRead(data);
+            // ctx.fireChannelRead(data);
         }
     }
 }

@@ -3,9 +3,12 @@ package com.lingfeng.rpc.server.handler;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
 import com.lingfeng.rpc.server.nettyserver.NettyServer;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
@@ -61,5 +64,14 @@ public abstract class AbsServerHandler<T> extends SimpleChannelInboundHandler<T>
 
     public <M extends Serializable> void writeAndFlush(Channel channel, M msg, Cmd type) {
         getServer().writeAndFlush(channel, msg, type);
+    }
+
+    protected ByteBuf buildMsg(String msg) {
+//        CompositeByteBuf byteBufs = Unpooled.compositeBuffer();
+        return Unpooled.copiedBuffer(msg, CharsetUtil.UTF_8);
+    }
+
+    protected String parseStr(ByteBuf byteBuf) {
+        return byteBuf.toString(CharsetUtil.UTF_8);
     }
 }

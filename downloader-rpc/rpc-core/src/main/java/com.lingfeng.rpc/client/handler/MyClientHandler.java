@@ -44,7 +44,7 @@ public class MyClientHandler extends AbsClientHandler<SafeFrame<DataFrame<?>>> {
                 writeAndFlush(ctx, resp, Cmd.RESPONSE);
             }
         }
-        ctx.fireChannelRead(frame);
+        //ctx.fireChannelRead(frame);
     }
 
 

@@ -28,7 +28,9 @@
             <artifactId>netty-all</artifactId>
             <version>${netty.version}</version>
         </dependency>
+
         <dependency>
+        <!--  数据加密限制解除包-->
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>${bouncycastle.version}</version>

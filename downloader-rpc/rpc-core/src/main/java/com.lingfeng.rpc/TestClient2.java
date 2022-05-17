@@ -20,7 +20,8 @@ public class TestClient2 {
     public static void main(String[] args) throws InterruptedException {
 
 
-        BizNettyClient client1 = NettyClientFactory.generateClient(new Address("127.0.0.1", 9999), BizNettyClient.class);
+        BizNettyClient client1 = NettyClientFactory.generateClient(new Address("127.0.0.1", 9999),
+                BizNettyClient.class);
         client1.start();
 
         // TimeUnit.SECONDS.sleep(8);

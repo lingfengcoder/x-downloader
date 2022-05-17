@@ -27,7 +27,7 @@ public class NettyServerHandler extends AbsServerHandler<SafeFrame<Frame<?>>> {
             Frame<?> frame = data.getContent();
             log.info("server get RESPONSE data = {}", frame);
         } else {
-            ctx.fireChannelRead(data);
+            //ctx.fireChannelRead(data);
         }
     }
 }

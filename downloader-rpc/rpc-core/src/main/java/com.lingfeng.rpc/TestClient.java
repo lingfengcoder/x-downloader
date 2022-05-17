@@ -21,7 +21,8 @@ public class TestClient {
     public static void main(String[] args) throws InterruptedException {
 
 
-        BizNettyClient client1 = NettyClientFactory.generateClient(new Address("127.0.0.1", 9999), BizNettyClient.class);
+        BizNettyClient client1 = NettyClientFactory.generateClient(new Address("127.0.0.1", 9999),
+                BizNettyClient.class);
         client1.start();
 
         // TimeUnit.SECONDS.sleep(8);
@@ -50,7 +51,7 @@ public class TestClient {
                     data = "[client1] bbq-" + tmp;
                     DataFrame<String> dataFrame = new DataFrame<>();
                     dataFrame.setData(data);
-                   // client1.writeAndFlush(dataFrame, Cmd.REQUEST);
+                    // client1.writeAndFlush(dataFrame, Cmd.REQUEST);
                 } catch (Exception e) {
                     log.info("发送{} 失败", data);
                     //  log.error(e.getMessage(), e);
@@ -62,7 +63,8 @@ public class TestClient {
                     left.set(++tmp);
                 }
             }
-        }).start();
+        });
+        //.start();
 
 
         //TimeUnit.SECONDS.sleep(5);

@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TestServer {
     public static void main(String[] args) throws InterruptedException {
-        BizNettyServer server = NettyServerFactory.generateServer(new Address("127.0.0.1", 9999), BizNettyServer.class);
+        BizNettyServer server = NettyServerFactory.generateServer(new Address("127.0.0.1", 9999),
+                BizNettyServer.class);
         server.start();
         while (server.state() != 1) {
         }
@@ -36,7 +37,7 @@ public class TestServer {
                 frame.setData("这是来自服务器的数据:" + TimeUtil.formatDate(SystemClock.now()));
                 server.writeAndFlush(channel, frame, Cmd.REQUEST);
             }
-            // TimeUnit.MILLISECONDS.sleep(200);
+            TimeUnit.MILLISECONDS.sleep(200);
         }
     }
 }

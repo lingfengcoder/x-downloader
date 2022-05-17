@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RpcServer {
-    AtomicInteger data = new AtomicInteger();
+    private final AtomicInteger data = new AtomicInteger();
 
     @PostConstruct
     public void init() {
@@ -35,24 +35,16 @@ public class RpcServer {
             long now = SystemClock.now();
             while (true) {
                 try {
-                    TimeUnit.MILLISECONDS.sleep(0);
+                    TimeUnit.MILLISECONDS.sleep(100);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                int i = data.incrementAndGet();
                 Collection<Channel> channels = server.allChannels();
                 if (!channels.isEmpty()) {
                     // testStringByCTX(server);
                 }
                 for (Channel channel : channels) {
                     testString(server, channel);
-                }
-                if ((SystemClock.now() - now) / 1000 > 5) {
-                    System.out.println("停止发送");
-                    System.out.println("停止发送");
-                    System.out.println("停止发送");
-                    System.out.println("停止发送");
-                    break;
                 }
             }
         }).start();

@@ -189,45 +189,4 @@ public class BizNettyClient extends AbsNettyClient implements NettyClient {
         close0();
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        Object lock = new Object();
-        ScheduledExecutorService scheduled = new ScheduledThreadPoolExecutor(1, new ThreadPoolExecutor.AbortPolicy());
-        int x = 10;
-        final Thread[] bizthread = {null};
-        for (int i = 0; i < x; i++) {
-            int finalI = i;
-
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    Thread thread = Thread.currentThread();
-                    if (finalI == 1) {
-                        try {
-                            if (finalI == 1) {
-                                bizthread[0] = thread;
-                            }
-                            synchronized (lock) {
-                                log.info("thread={} 开始等待", thread);
-                                lock.wait();
-                                // log.info("lock wait 释放了");
-                            }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        log.info("thread={} 正常执行", thread);
-                    }
-                }
-            };
-
-            scheduled.scheduleAtFixedRate(runnable, 0, 2000, TimeUnit.MILLISECONDS);
-        }
-
-        while (true) {
-            TimeUnit.SECONDS.sleep(5);
-            log.info("开始中断");
-            bizthread[0].interrupt();
-        }
-    }
-
 }

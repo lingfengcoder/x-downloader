@@ -69,10 +69,21 @@ public class NettyClientFactory {
         client.setAddress(address);
         //通过配置的方式，可以保证每次重启都获取新的handler对象 ,从而避免了@Sharable
         client.config(_client -> {
+
+//            CoderFactory coderFactory = CoderFactory.getInstance();
+//            Coder generate = coderFactory.generate(SafeCoder.class);
+//            _client
+//                    .addHandler(generate.type())
+//                    .addHandler(generate.decode())
+//                    .addHandler(generate.encode());
             //coder 不允许共享需要单独添加
             //自定义传输协议
             _client
                     //监听器
+                    //空闲处理器
+                    //.addHandler(IdleHandler.getIdleHandler())
+                    //心跳处理器
+                    //.addHandler(new HeartHandler())// HeartHandler.NAME
                     .addListener(new ReConnectFutureListener());
             //添加业务处理器
             if (func != null) {
