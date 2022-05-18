@@ -19,7 +19,7 @@
         <module>downloader-data</module>
         <module>downloader-log</module>
         <module>downloader-bizpool</module>
-        <module>downloader-rpc</module>
+<!--        <module>downloader-rpc</module>-->
     </modules>
 
 
