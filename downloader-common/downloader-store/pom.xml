@@ -4,15 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>lingfeng-biz</groupId>
-        <artifactId>x-downloader</artifactId>
+        <artifactId>downloader-common</artifactId>
         <version>1.0.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <packaging>pom</packaging>
-    <artifactId>downloader-server</artifactId>
+    <artifactId>downloader-store</artifactId>
 
-    <modules>
-        <module>downloader-netty-server</module>
-    </modules>
+
 </project>

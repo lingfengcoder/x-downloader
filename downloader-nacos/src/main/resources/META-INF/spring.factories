@@ -1,6 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.pukka.iptv.downloader.nacos.NacosConfig,\
-com.pukka.iptv.downloader.nacos.NacosService,\
-com.pukka.iptv.downloader.nacos.RestHttpConfig,\
-com.pukka.iptv.downloader.nacos.listener.NacosListener
-

@@ -1,0 +1,65 @@
+# spring config
+spring:
+  application:
+    name: @project.artifactId@
+  profiles:
+    active: @profiles.active@
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      discovery:
+        metadata:
+          management:
+            context-path: ${server.servlet.context-path:}/actuator
+        server-addr: ${nacos.server-addr}
+        username: ${nacos.username}
+        password: ${nacos.password}
+        #cluster-name: biz-dev
+        namespace: ${nacos.namespace}
+        group: ${nacos.group}
+        #enabled: false
+      config:
+        server-addr: ${nacos.server-addr}
+        username: ${nacos.username}
+        password: ${nacos.password}
+        #cluster-name: biz-dev
+        file-extension: ${nacos.file-extension}
+        namespace: ${nacos.namespace}
+        extension-configs:
+          - data-id: ${spring.application.name}-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+        #共享配置
+        shared-configs:
+          - data-id: biz-rabbitmq-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+          - data-id: biz-redis-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+          - data-id: biz-mysql-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+          - data-id: biz-white-list-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+          - data-id: biz-config-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+          - data-id: biz-downloader-${spring.profiles.active}.${spring.cloud.nacos.config.file-extension}
+            group: ${nacos.group}
+            refresh: true
+# log config
+log:
+  file:
+    path: /biz/bokong/data/applogs/${spring.application.name}/${hostname}/
+    name: info
+    suffix: log
+    compress:
+      suffix: gz
+logging:
+  file:
+    name: ${log.file.path}${log.file.name}.${log.file.suffix}
+  pattern:
+    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"

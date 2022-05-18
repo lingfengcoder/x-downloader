@@ -1,0 +1,14 @@
+server:
+  port: 7002
+  #servlet:
+  #  context-path: /@project.artifactId@
+#nacos服务地址及账号密码
+nacos:
+  server-addr: 172.25.224.98:8848
+  namespace: biz
+  username: nacos
+  password: nacos
+  group: biz
+  file-extension: yaml
+  # app-name: ${spring.application.name}
+hostname: ${COMPUTERNAME:logs}

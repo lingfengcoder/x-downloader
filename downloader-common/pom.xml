@@ -9,10 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <artifactId>downloader-common</artifactId>
     <packaging>pom</packaging>
-    <artifactId>downloader-server</artifactId>
-
     <modules>
-        <module>downloader-netty-server</module>
+        <module>downloader-bizpool</module>
+        <module>downloader-data</module>
+        <module>downloader-log</module>
+        <module>downloader-store</module>
     </modules>
 </project>
