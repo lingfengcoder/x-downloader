@@ -5,6 +5,7 @@ import com.lingfeng.biz.downloader.model.*;
 import com.lingfeng.biz.downloader.pool.Node;
 import com.lingfeng.biz.downloader.task.LocalPathTranService;
 import com.lingfeng.biz.downloader.task.callback.FtpTaskNotify;
+import com.lingfeng.biz.downloader.task.callback.api.TaskNotify;
 import com.lingfeng.biz.downloader.util.FTPUtils;
 import com.lingfeng.biz.downloader.util.FtpPool;
 import lombok.extern.slf4j.Slf4j;

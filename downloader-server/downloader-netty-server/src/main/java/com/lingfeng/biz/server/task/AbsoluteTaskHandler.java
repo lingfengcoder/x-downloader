@@ -156,11 +156,11 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         // ExecutorService executor = head.executorPool();
         //获取待执行队列信息
 
-        //主动拉取数据
+        //从存储中获取带处理的任务
         MetaHead metaHead = getMetaHead();
         StoreApi<DownloadTask> storeApi = metaHead.dbStore();
         List<DownloadTask> taskList = storeApi.query(10);
-        
+
         //l.log(i -> i.info("{} 主动拉取数据", head.name()));
 //        boolean addSuccess = addCacheQueue(head, msgTask);
 //        if (!addSuccess) {

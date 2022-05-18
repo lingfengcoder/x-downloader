@@ -4,6 +4,7 @@ import com.lingfeng.biz.downloader.enums.TaskStatus;
 import com.lingfeng.biz.downloader.model.*;
 import com.lingfeng.biz.downloader.task.LocalPathTranService;
 import com.lingfeng.biz.downloader.task.callback.FtpTaskNotify;
+import com.lingfeng.biz.downloader.task.callback.api.TaskNotify;
 import com.lingfeng.biz.downloader.util.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
