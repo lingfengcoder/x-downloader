@@ -5,8 +5,30 @@ x-downloader 是一款分布式下载器，目前支持HTTP、FTP 文件下载�
 天然支持动态调整下载速率(同时下载文件数)、查看下载进度、优先级下载(mq+内部优先队列)、断点下载、动态横向扩容(增加下载节点)等功能。
 #### 架构
 架构说明
+### RPC版本
+架构图的在线地址：https://www.processon.com/view/link/61e5236563768906b3e9a052
 
+####技术点
+
+##### 1.三种架构模式
+![](./readme/image/架构模式.png)
+
+##### 2.服务端高可用方案
+![](./readme/image/服务端HA.png)
+
+##### 3.快慢缓冲队列
+![](./readme/image/快慢消费.png)
+
+##### 4.时空消费队列
+![](./readme/image/时空生产-缓冲队列.png)
+
+##### 5.分配路由表
+![](./readme/image/分配路由表.png)
+
+
+### Nacos +RabbitMq 版本
 ![](./readme/image/x-downloader架构图.png)
+
 
 #### 使用说明
 

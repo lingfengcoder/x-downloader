@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.lingfeng.biz.downloader.log.LogConfig,\
+com.lingfeng.biz.downloader.log.BizLog

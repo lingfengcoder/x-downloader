@@ -10,15 +10,11 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>downloader-downloader</module>
-        <module>downloader-dispatcher</module>
+        <module>downloader-common</module>
+        <module>downloader-api</module>
+        <module>downloader-client</module>
         <module>downloader-server</module>
-        <module>downloader-ffmpeg</module>
-        <module>downloader-mq</module>
-        <module>downloader-nacos</module>
-        <module>downloader-data</module>
-        <module>downloader-log</module>
-        <module>downloader-bizpool</module>
+        <!--        <module>downloader-rpc</module>-->
     </modules>
 
 
@@ -59,14 +55,16 @@
         <validation-api.version>2.0.1.Final</validation-api.version>
         <servlet-api.version>4.0.1</servlet-api.version>
         <httpclient.version>4.5.13</httpclient.version>
-
-        <xxl-job.version>2.3.0</xxl-job.version>
-
         <!--        <elasticsearch.version>7.15.0</elasticsearch.version>-->
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>lingfeng-biz</groupId>
+                <artifactId>x-netty-rpc</artifactId>
+                <version>1.0.0</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>

@@ -1,0 +1,16 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.lingfeng.biz.downloader.config.NodeConfig,\
+com.lingfeng.biz.downloader.config.StoreConfig,\
+com.lingfeng.biz.downloader.config.FtpConfig,\
+com.lingfeng.biz.downloader.task.multiplyhandler.MultiplyTaskHandler,\
+com.lingfeng.biz.downloader.task.downloader.FtpDownloader,\
+com.lingfeng.biz.downloader.task.downloader.M3u8Downloader,\
+com.lingfeng.biz.downloader.task.downloader.HttpDownloader,\
+com.lingfeng.biz.downloader.task.process.post.TaskStartedProcess,\
+com.lingfeng.biz.downloader.task.process.post.FtpPostProcess,\
+com.lingfeng.biz.downloader.task.process.post.M3u8PostProcess,\
+com.lingfeng.biz.downloader.task.process.post.TaskFailedProcess,\
+com.lingfeng.biz.downloader.task.callback.FtpTaskNotify,\
+com.lingfeng.biz.downloader.task.callback.M3u8TaskNotify,\
+com.lingfeng.biz.downloader.task.process.AsyncDownloadProcess,\
+com.lingfeng.biz.downloader.task.AutoNode

@@ -1,3 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.pukka.iptv.downloader.log.LogConfig,\
-com.pukka.iptv.downloader.log.BizLog
