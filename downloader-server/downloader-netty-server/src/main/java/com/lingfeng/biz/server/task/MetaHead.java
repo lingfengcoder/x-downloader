@@ -4,8 +4,10 @@ import com.lingfeng.biz.downloader.log.BizLog;
 
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.MsgTask;
+import com.lingfeng.biz.downloader.model.NodeRemain;
 import com.lingfeng.biz.downloader.model.QueueInfo;
 import com.lingfeng.biz.server.DownloaderServer;
+import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
 import com.lingfeng.biz.server.policy.DeliverPolicy;
 import lombok.Getter;
@@ -37,11 +39,11 @@ public class MetaHead {
     //缓冲队列最大长度
     private int maxCacheSize = 50;
     //缓冲任务队列
-    private List<MsgTask> cacheList;
+    private WaterCacheQueue<DownloadTask> cacheQueue;
     //执行锁
     private ReentrantLock lock;
     //策略类
-    private DeliverPolicy<QueueInfo, MsgTask> deliverPolicy;
+    private DeliverPolicy<NodeRemain, Integer> deliverPolicy;
     //执行器线程池
     private ThreadPoolTaskExecutor executorPool;
     //上一次优先级高的队列 0:下载队列 1:重试队列

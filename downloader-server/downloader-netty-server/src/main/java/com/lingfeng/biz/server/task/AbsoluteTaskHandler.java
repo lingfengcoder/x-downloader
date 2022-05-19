@@ -1,11 +1,14 @@
 package com.lingfeng.biz.server.task;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.lingfeng.biz.downloader.log.BizLog;
-import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.MsgTask;
-import com.lingfeng.biz.downloader.model.QueueInfo;
+import com.lingfeng.biz.downloader.model.*;
+import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
+import com.lingfeng.biz.server.dispatcher.DispatcherRouter;
+import com.lingfeng.biz.server.dispatcher.NodeClientStore;
+import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.biz.server.policy.DeliverPolicy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -13,10 +16,12 @@ import org.springframework.util.CollectionUtils;
 import store.StoreApi;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * @Author: wz
@@ -25,6 +30,8 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 public abstract class AbsoluteTaskHandler implements TaskHandler {
+
+    protected DispatcherRouter<DownloadTask> dispatcherRouter = new DispatcherRouter<>();
 
     //获取调度头部信息
     protected abstract MetaHead getMetaHead();
@@ -44,21 +51,27 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
     //待执行任务监听
     private void handler(MetaHead head) {
         ReentrantLock lock = head.lock();
-        List<MsgTask> msgTasks = head.cacheList();
+        WaterCacheQueue<DownloadTask> cacheQueue = head.cacheQueue();
         try {
             if (!lock.tryLock(5000, TimeUnit.MILLISECONDS)) {
                 return;
             }
-            // BizLog.logs(i -> log.info(head.name() + " 开始执行"));
-            log.info(head.name() + " 开始执行");
-            //如果队列为空的要主动拉一下
-            //获取差值
-            int diff = head.dispatcherConfig().getCacheTaskLen() - msgTasks.size();
-            if (diff > 0) {
-                //拉diff个消息
-                head.queue().fetchCount(diff);
-                //主动拉取数据
-                pullData(head);
+            StoreApi<DownloadTask> storeApi = head.dbStore();
+            //判断缓存是否应该 加入新的数据并加入新的数据
+            boolean hungry = cacheQueue.isHungry();
+            if (hungry) {
+                List<DownloadTask> noJoinCacheList = cacheQueue.addSomeUntilFull(() -> {
+                    //差值
+                    int diff = cacheQueue.diff();
+                    return pullData(diff);
+                });
+                //将不能分配的任务还原为“待下载”
+                if (noJoinCacheList != null) {
+                    for (DownloadTask item : noJoinCacheList) {
+                        item.setStatus(TaskState.WAIT.code());
+                        storeApi.updateById(item);
+                    }
+                }
             }
             //处理缓冲队列的数据
             if (trigger(head)) {
@@ -86,23 +99,44 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
             if (!lock.tryLock(5000, TimeUnit.MILLISECONDS)) {
                 return false;
             }
-            List<MsgTask> sendList = head.cacheList();
+            WaterCacheQueue<DownloadTask> cacheQueue = head.cacheQueue();
+            DispatcherConfig dispatcherConfig = head.dispatcherConfig();
+            Integer nodeMaxTaskCount = dispatcherConfig.getQueueLenLimit();
             //缓冲长度 (待发送数据长度)
-            int total = sendList.size();
+            int total = cacheQueue.size();
             //没有要发送的数据
             if (total == 0) return true;
             String name = head.name();
             //获取分配策略
-            DeliverPolicy<QueueInfo, MsgTask> deliverPolicy = head.deliverPolicy();
-            //获取空闲队列
-            List<QueueInfo> freeQueue = searchQueueMsgCount(head);
-            l.log(i -> log.info("{} 通过{}策略进行任务分配", name, deliverPolicy.getClass()));
+            DeliverPolicy<NodeRemain, Integer> deliverPolicy = head.deliverPolicy();
+            //获取全部任务
+            List<DownloadTask> taskList = cacheQueue.pollSome(cacheQueue.size());
+            //省略任务其他属性只保留taskId,节约内存
+            List<Integer> taskIdList = taskList.stream().map(DownloadTask::getId).collect(Collectors.toList());
+            //获取路由中心
+            DispatcherRouter router = SpringUtil.getBean(DispatcherRouter.class);
+            //路由表
+            ConcurrentMap<String, List<Route>> routePage = router.getRoutePage();
+            //将路由表转成权重
+            List<NodeRemain> nodeRemainList = new ArrayList<>();
+            for (String clientId : routePage.keySet()) {
+                NodeRemain nodeRemain = new NodeRemain();
+                nodeRemain.setClientId(clientId);
+                //节点剩余
+                nodeRemain.setRemain(nodeMaxTaskCount - routePage.get(clientId).size());
+                //设置节点最多消费个数
+                nodeRemain.setMax(nodeMaxTaskCount);
+                nodeRemainList.add(nodeRemain);
+            }
+
+            log.info("{} 通过{}策略进行任务分配", name, deliverPolicy.getClass());
             //通过策略进行任务分配
-            Map<QueueInfo, List<MsgTask>> deliverData = deliverPolicy.deliver(sendList, freeQueue);
+            // node --> list<taskId>
+            Map<NodeRemain, List<Integer>> deliverData = deliverPolicy.deliver(taskIdList, nodeRemainList);
             if (!CollectionUtils.isEmpty(deliverData)) {
                 //发送任务
                 //deliver方法会减少sendList的个数 执行后的sendList.size()表示剩余没有发送的
-                int sendCount = total - sendList.size();
+                int sendCount = total - taskIdList.size();
                 l.log(i -> log.info("{} 共送{}条数据", name, total));
                 l.log(i -> log.info("{} 本次将发送{}条数据", name, sendCount));
                 sendTaskToExecuteQueue(deliverData, sendCount, head);
@@ -121,6 +155,10 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         return false;
     }
 
+    private List<NodeRemain> transRouteMap(Collection<List<Route>> routes) {
+
+    }
+
     private void rollbackRetryQueueMsg(List<MsgTask> sendList) {
         Iterator<MsgTask> iterator = sendList.iterator();
         while (iterator.hasNext()) {
@@ -130,21 +168,6 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         }
     }
 
-    //添加任务到缓冲区
-    private boolean addCacheQueue(MetaHead head, MsgTask msgTask) {
-        ReentrantLock lock = head.lock();
-        try {
-            lock.lock();
-            //如果队列未满
-            if (head.cacheList().size() < head.dispatcherConfig().getCacheTaskLen()) {
-                head.cacheList().add(msgTask);
-                return true;
-            }
-        } finally {
-            lock.unlock();
-        }
-        return false;
-    }
 
     /**
      * @Description: 从任务队列主动拉取数据并添加到缓冲中去
@@ -152,26 +175,14 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
      * @author: wz
      * @date: 2021/10/19 21:24
      */
-    private void pullData(MetaHead head) {
+    private List<DownloadTask> pullData(int count) {
         // ExecutorService executor = head.executorPool();
         //获取待执行队列信息
-
         //从存储中获取带处理的任务
         MetaHead metaHead = getMetaHead();
         StoreApi<DownloadTask> storeApi = metaHead.dbStore();
-        List<DownloadTask> taskList = storeApi.query(10);
-
-        //l.log(i -> i.info("{} 主动拉取数据", head.name()));
-//        boolean addSuccess = addCacheQueue(head, msgTask);
-//        if (!addSuccess) {
-//            //没有添加成功的退回给mq
-//            log.warn("没有添加成功的退回给mq");
-//            Channel channel = msgTask.getQueueChannel().channel();
-//            MqUtil.nack(channel, msgTask.getDeliveryTag());
-//            //把节点退给连接池
-//            Node<RabbitMqPool.RKey, Channel> node = msgTask.getQueueChannel().node();
-//            RabbitMqPool.me().back(node);
-//        }
+        //此处需要使用分布式锁,获取N个“待下载”的任务并修改为“下载中”
+        return storeApi.queryAndModify(count, TaskState.WAIT.code(), TaskState.DOING.code());
     }
 
 
@@ -186,9 +197,7 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
         ReentrantLock lock = head.lock();
         AtomicLong lastSendTime = head.lastSendTime();
         int maxWaitTime = head.maxWaitTime();
-        //通过nacos动态获取到处理器信息
-        DispatcherConfig config = head.dispatcherConfig();
-        List<MsgTask> sendList = head.cacheList();
+        WaterCacheQueue<DownloadTask> cacheQueue = head.cacheQueue();
         try {
             lock.lock();
             //超时触发
@@ -197,8 +206,8 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
                 resetSendTime(head);
                 return true;
             }
-            //队列大于最大任务数
-            if (sendList.size() >= config.getCacheTaskLen()) {
+            //高水位发送
+            if (cacheQueue.isEnough()) {
                 return true;
             }
         } finally {

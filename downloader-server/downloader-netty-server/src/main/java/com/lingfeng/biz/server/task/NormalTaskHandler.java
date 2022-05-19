@@ -2,8 +2,10 @@ package com.lingfeng.biz.server.task;
 
 
 import com.lingfeng.biz.downloader.log.BizLog;
+import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.MsgTask;
 import com.lingfeng.biz.server.DownloaderServer;
+import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
 import com.lingfeng.biz.server.policy.WorkMoreGetMorePlusPolicy;
 import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
@@ -70,11 +72,12 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
                     bizLog.log(i -> log.info("队列声明成功"));
                 }
 
-                if (metaHead == null)
+                if (metaHead == null) {
+                    WaterCacheQueue<DownloadTask> cacheQueue = new WaterCacheQueue<>(5, 10, new PriorityQueue<>());
                     metaHead = new MetaHead()
                             .name("待下载队列任务处理器")
                             .lock(lock)
-                            .cacheList(sendList)
+                            .cacheQueue(cacheQueue)
                             //.queue(getTaskQueue())
                             .executorPool(executor)
                             .dispatcherConfig(config)
@@ -85,6 +88,7 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
                             .deliverPolicy(deliverPolicy)
                             .maxCacheSize(MAX_TASK_QUEUE_SIZE)
                             .log(bizLog);
+                }
             } finally {
                 lock.unlock();
             }

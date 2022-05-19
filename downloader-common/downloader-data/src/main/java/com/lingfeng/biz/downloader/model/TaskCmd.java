@@ -5,19 +5,19 @@ package com.lingfeng.biz.downloader.model;
  * @Date: 2022/5/18 15:32
  * @Description:
  */
-public enum TaskState {
-    WAIT(1),//待执行
-    DOING(2),//执行中
-    FIN(3),// 任务完成
-    ERROR(4);//任务异常
+public enum TaskCmd {
+    NEW_TASK(1),//新任务
+    TASK_FIN(2),//任务完成
+    TASK_FAIL(3),// 任务失败
+    TASK_REJECT(4);//拒绝任务
     private int code;
 
-    TaskState(int code) {
+    TaskCmd(int code) {
         this.code = code;
     }
 
-    public static TaskState trans(int state) {
-        for (TaskState value : TaskState.values()) {
+    public static TaskCmd trans(int state) {
+        for (TaskCmd value : TaskCmd.values()) {
             if (value.code == state) {
                 return value;
             }

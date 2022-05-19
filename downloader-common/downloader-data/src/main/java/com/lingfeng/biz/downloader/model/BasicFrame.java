@@ -10,21 +10,19 @@ import java.io.Serializable;
 /**
  * @Author: wz
  * @Date: 2022/5/18 19:47
- * @Description:
+ * @Description: 基础帧 主要用来 注册、退出 等
  */
 @Setter
 @Getter
 @ToString
 @Builder
-public class TaskFrame<T> implements Serializable {
+public class BasicFrame<T> implements Serializable {
     //目标方法
     private String target;
     //任务详情
     private T data;
-    //任务id
-    private String taskId;
     //客户端id 要求：全局唯一，重启后不变化
     private String clientId;
     //指令集
-    private TaskCmd taskCmd;
+    private BasicCmd cmd;
 }

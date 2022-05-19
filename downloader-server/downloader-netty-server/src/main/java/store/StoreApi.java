@@ -12,5 +12,7 @@ public interface StoreApi<T> {
 
     List<T> query(int limit);
 
+    List<T> queryAndModify(int limit, int srcState, int tarState);
+
     boolean updateById(T t);
 }
