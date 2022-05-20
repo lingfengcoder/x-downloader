@@ -5,6 +5,7 @@ import com.lingfeng.biz.downloader.util.ListUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +18,18 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Slf4j
 public class DispatcherRouter {
-    @Autowired
-    private NodeClientStore nodeClientStore;
+
+    private final Object lock = new Object();
+
+    private DispatcherRouter() {
+    }
+
+    private static final DispatcherRouter instance = new DispatcherRouter();
+
+    public static DispatcherRouter getInstance() {
+        return instance;
+    }
+
     //路由表  clientId --> List<Route>
     private final ConcurrentMap<String, List<Route>> routePage = new ConcurrentHashMap<>();
 
@@ -32,15 +43,39 @@ public class DispatcherRouter {
 
     //添加路由
     public void addRoute(String key, List<Route> list) {
-        if (routePage.containsKey(key)) {
-            List<Route> old = routePage.get(key);
-            if (old == null) {
-                routePage.put(key, list);
-            } else {
-                old.addAll(list);
+        List<Route> old = routePage.get(key);
+        if (old == null) {
+            synchronized (lock) {
+                old = routePage.get(key);
+                if (old == null) {
+                    routePage.put(key, list);
+                } else {
+                    old.addAll(list);
+                }
             }
         } else {
-            routePage.put(key, list);
+            synchronized (lock) {
+                old.addAll(list);
+            }
+        }
+    }
+
+    //添加路由
+    public void addRoute(String key, Route route) {
+        List<Route> old = routePage.get(key);
+        if (old == null) {
+            synchronized (lock) {
+                old = routePage.get(key);
+                if (old == null) {
+                    routePage.put(key, Arrays.asList(route));
+                } else {
+                    old.add(route);
+                }
+            }
+        } else {
+            synchronized (lock) {
+                old.add(route);
+            }
         }
     }
 

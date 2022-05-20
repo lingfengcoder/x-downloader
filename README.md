@@ -28,19 +28,26 @@ nacos_mq分支：基于nacos和rabitmq的分布式下载器(已完成)
 
 #### 技术点
 
-##### 1.三种架构模式
+
+##### 7.任务调度模型
+![](./readme/image/dispatcher.png)
+
+##### 6.客户端组
+![](./readme/image/clientGroup.png)
+
+##### 5.三种架构模式
 ![](./readme/image/架构模式.png)
 
-##### 2.服务端高可用方案
+##### 4.服务端高可用方案
 ![](./readme/image/服务端HA.png)
 
 ##### 3.快慢缓冲队列
 ![](./readme/image/快慢消费.png)
 
-##### 4.时空消费队列
+##### 2.时空消费队列
 ![](./readme/image/时空生产-缓冲队列.png)
 
-##### 5.分配路由表
+##### 1.分配路由表
 ![](./readme/image/分配路由表.png)
 
 

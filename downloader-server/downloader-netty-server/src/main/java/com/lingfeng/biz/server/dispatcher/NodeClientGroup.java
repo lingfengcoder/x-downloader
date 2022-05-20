@@ -1,7 +1,6 @@
 package com.lingfeng.biz.server.dispatcher;
 
 import com.lingfeng.biz.server.model.NodeClient;
-import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,8 +10,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Date: 2022/5/19 16:32
  * @Description: 客户端节点 存储
  */
-@Component
-public class NodeClientStore {
+
+public class NodeClientGroup {
+    private NodeClientGroup() {
+    }
+
+    private static final NodeClientGroup instance = new NodeClientGroup();
+
+    public static NodeClientGroup getInstance() {
+        return instance;
+    }
+
     private final ConcurrentHashMap<String, NodeClient> clients = new ConcurrentHashMap<>();
 
     public void addNodeClient(NodeClient client) {
@@ -25,5 +33,9 @@ public class NodeClientStore {
 
     public Collection<NodeClient> getClients() {
         return clients.values();
+    }
+
+    public NodeClient getClient(String clientId) {
+        return clients.get(clientId);
     }
 }

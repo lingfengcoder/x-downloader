@@ -3,9 +3,7 @@ package com.lingfeng.biz.server.handler;
 
 import com.lingfeng.biz.downloader.model.BasicCmd;
 import com.lingfeng.biz.downloader.model.BasicFrame;
-import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.TaskFrame;
-import com.lingfeng.biz.server.dispatcher.NodeClientStore;
+import com.lingfeng.biz.server.dispatcher.NodeClientGroup;
 import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.frame.SafeFrame;
@@ -14,10 +12,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
 import java.lang.ref.WeakReference;
 
 @Slf4j
@@ -26,7 +22,7 @@ import java.lang.ref.WeakReference;
 //基础处理器 主要负责 管理客户端
 public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<BasicFrame<Object>>> {
     @Autowired
-    private NodeClientStore clientStore;
+    private NodeClientGroup clientStore;
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<BasicFrame<Object>> data) {

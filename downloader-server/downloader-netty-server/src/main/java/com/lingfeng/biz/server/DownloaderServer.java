@@ -3,7 +3,6 @@ package com.lingfeng.biz.server;
 import com.lingfeng.biz.server.constant.MsgType;
 import com.lingfeng.biz.server.handler.BizBasicServerHandler;
 import com.lingfeng.biz.server.handler.BizMessageServerHandler;
-import com.lingfeng.biz.server.model.DownloaderClient;
 import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.data.Frame;
@@ -32,7 +31,11 @@ public class DownloaderServer {
     @Autowired
     private BizMessageServerHandler bizMessageServerHandler;
 
-    private volatile BizNettyServer nettyServer;
+    private static volatile BizNettyServer nettyServer;
+
+    public static BizNettyServer getInstance() {
+        return nettyServer;
+    }
 
     @PostConstruct
     private void startServer() {
