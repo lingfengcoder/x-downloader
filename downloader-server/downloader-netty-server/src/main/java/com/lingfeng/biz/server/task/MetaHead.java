@@ -1,11 +1,8 @@
 package com.lingfeng.biz.server.task;
 
 import com.lingfeng.biz.downloader.log.BizLog;
-
 import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.MsgTask;
 import com.lingfeng.biz.downloader.model.NodeRemain;
-import com.lingfeng.biz.downloader.model.QueueInfo;
 import com.lingfeng.biz.server.DownloaderServer;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
@@ -14,10 +11,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import store.DbStore;
 import store.StoreApi;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -43,7 +38,7 @@ public class MetaHead {
     //执行锁
     private ReentrantLock lock;
     //策略类
-    private DeliverPolicy<NodeRemain, Integer> deliverPolicy;
+    private DeliverPolicy<NodeRemain, DownloadTask> deliverPolicy;
     //执行器线程池
     private ThreadPoolTaskExecutor executorPool;
     //上一次优先级高的队列 0:下载队列 1:重试队列

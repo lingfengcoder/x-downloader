@@ -43,10 +43,14 @@ public class WaterCacheQueue<T> {
 
     public boolean add(T t) {
         if (cache.size() < highWaterLevel) {
-            cache.add(t);
-            return true;
+            return cache.add(t);
         }
         return false;
+    }
+
+    //忽略高水位的增加
+    public boolean addMust(T t) {
+        return cache.add(t);
     }
 
     //低于低水位认为需要获取数据
@@ -59,7 +63,7 @@ public class WaterCacheQueue<T> {
         return cache.size() >= highWaterLevel;
     }
 
-    //获取 高水位与实际的差值，（用于一次性吃饱）
+    //获取 高水位与实际的差值，（用于一次性吃饱:将数据填充到高水位）
     public int diff() {
         return highWaterLevel - cache.size();
     }

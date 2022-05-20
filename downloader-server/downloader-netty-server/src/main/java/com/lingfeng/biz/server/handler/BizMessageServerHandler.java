@@ -3,14 +3,12 @@ package com.lingfeng.biz.server.handler;
 
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.TaskFrame;
-import com.lingfeng.biz.server.dispatcher.NodeClientStore;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.frame.SafeFrame;
 import com.lingfeng.rpc.server.handler.AbsServerHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 

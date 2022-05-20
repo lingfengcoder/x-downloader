@@ -40,7 +40,7 @@
         <lombok.version>1.18.20</lombok.version>
         <xxl-job.version>2.3.0</xxl-job.version>
 
-        <jackson.version>2.13.0-rc1</jackson.version>
+        <jackson.version> 2.13.2.1</jackson.version>
         <maven-compiler.version>3.8.1</maven-compiler.version>
         <maven-surefire.version>3.0.0-M5</maven-surefire.version>
         <module.version>1.0.0</module.version>

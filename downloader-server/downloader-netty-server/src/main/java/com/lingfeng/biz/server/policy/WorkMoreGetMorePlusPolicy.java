@@ -1,9 +1,8 @@
 package com.lingfeng.biz.server.policy;
 
 import cn.hutool.core.util.ObjectUtil;
+
 import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.NodeRemain;
 import com.lingfeng.biz.downloader.model.NodeRemain;
 import com.lingfeng.biz.downloader.util.ListUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,7 @@ public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<NodeRemain, Down
      * @return void
      * @Description 通过数学权重方法进行分配
      * @author wz
-     * @date 2022/2/15 10:13 <NodeRemain, DownloadTask>
+     * @date 2022/2/15 10:13 <NodeRemain, Integer>
      */
     private static Map<NodeRemain, List<DownloadTask>> workMoreGetMoreDeliveryTask(List<DownloadTask> taskList, List<NodeRemain> queueRemain) {
         int totalFree = 0;
