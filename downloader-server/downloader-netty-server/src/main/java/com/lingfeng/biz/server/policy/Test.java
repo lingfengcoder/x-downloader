@@ -34,7 +34,7 @@ public class Test {
         WorkMoreGetMorePlusPolicy workMoreGetMorePlusPolicy = new WorkMoreGetMorePlusPolicy();
         WorkMoreGetMorePolicy workMoreGetMorePolicy = new WorkMoreGetMorePolicy();
 
-        test(workMoreGetMorePlusPolicy, data);
+        //test(workMoreGetMorePlusPolicy, data);
 
         test(workMoreGetMorePolicy, data);
 

@@ -45,9 +45,7 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
             //处理缓冲队列的数据
             CacheHandler.cacheHandler(head);
             //开始调度分配任务
-            TaskDispatcher instance = TaskDispatcher.getInstance();
-            if (trigger(head))
-                instance.dispatch(head);
+            if (trigger(head)) TaskDispatcher.getInstance().dispatch(head);
         } catch (InterruptedException e) {
             log.error(e.getMessage(), e);
         } finally {
