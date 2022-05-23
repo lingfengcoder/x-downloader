@@ -31,11 +31,34 @@ public class NodeClientGroup {
         clients.remove(clientId);
     }
 
+    public void removeNodeClientByChannelId(String channelId) {
+        NodeClient client = getClientByChannelId(channelId);
+        if (client != null) {
+            removeNodeClient(client.getClientId());
+        }
+    }
+
     public Collection<NodeClient> getClients() {
         return clients.values();
     }
 
     public NodeClient getClient(String clientId) {
         return clients.get(clientId);
+    }
+
+    public NodeClient getClientByChannelId(String channelId) {
+        Collection<NodeClient> values = clients.values();
+        for (NodeClient client : values) {
+            if (client.getChannel() != null) {
+                if (client.getChannel().id().asLongText().equals(channelId)) {
+                    return client;
+                }
+            }
+            //如果channel被回收了，可以通过channelId识别
+            else if (client.getChannelId().equals(channelId)) {
+                return client;
+            }
+        }
+        return null;
     }
 }

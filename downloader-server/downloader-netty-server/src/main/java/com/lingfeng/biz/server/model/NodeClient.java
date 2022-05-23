@@ -24,8 +24,14 @@ public class NodeClient {
     // 因为存在节点与任务的粘连性，没有处理完的任务依然需要之前节点处理
     //所以此处就要求报文中直接携带clientId
     private String clientId;
+    //对应channel的id
+    private String channelId;
 
+    //是否是激活可用的状态
     private boolean alive;
+
+    //上次修改的时间
+    private long modifyTime;
 
     public Channel getChannel() {
         return this.channel.get();

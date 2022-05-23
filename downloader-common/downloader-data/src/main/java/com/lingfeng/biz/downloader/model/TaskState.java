@@ -9,7 +9,7 @@ public enum TaskState {
     WAIT(1),//待执行
     DOING(2),//执行中
     FIN(3),// 任务完成
-    ERROR(4);//任务异常
+    FAIL(4);//任务异常
     private int code;
 
     TaskState(int code) {

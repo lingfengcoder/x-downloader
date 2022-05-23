@@ -13,8 +13,8 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-@Builder
-public class Route {
-    private String clientId;
-    private String taskId;
+public class Route<T> {
+    private String target;
+    private String id;
+    private T data;
 }

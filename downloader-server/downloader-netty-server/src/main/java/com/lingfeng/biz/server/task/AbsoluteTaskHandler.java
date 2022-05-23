@@ -4,9 +4,7 @@ package com.lingfeng.biz.server.task;
 import com.lingfeng.biz.downloader.model.*;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import lombok.extern.slf4j.Slf4j;
-import store.StoreApi;
 
-import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;

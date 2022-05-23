@@ -31,6 +31,7 @@ public class BizMessageServerHandler extends AbsServerHandler<SafeFrame<TaskFram
             TaskFrame<DownloadTask> frame = data.getContent();
             log.info(" RESPONSE data = {}", frame);
             //提交给线程池执行
+            //note 这里同样需要注意，如果线程处理任务的时间比较久，注意线程池拒绝策略，如果发生了拒绝任务怎么处理
             TaskHandler handler = TaskHandler.builder().taskFrame(frame).build();
             dispatcherSenderThreadPool.execute(handler);
         } else ctx.fireChannelRead(data);

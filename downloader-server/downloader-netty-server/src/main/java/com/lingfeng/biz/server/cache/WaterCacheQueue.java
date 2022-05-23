@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 /**
@@ -14,10 +15,10 @@ import java.util.function.Supplier;
 @Setter
 @Getter
 public class WaterCacheQueue<T> {
-    private int lowWaterLevel;
-    private int highWaterLevel;
-    private int max;//暂时无用
-    private Queue<T> cache;
+    private volatile int lowWaterLevel;
+    private volatile int highWaterLevel;
+    private volatile int max;//暂时无用
+    private Queue<T> cache;//如果需要多线程
 
     public WaterCacheQueue(int lowWaterLevel, int highWaterLevel, Queue<T> cache) {
         this.lowWaterLevel = lowWaterLevel;

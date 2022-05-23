@@ -9,6 +9,7 @@ import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
 import com.lingfeng.biz.server.policy.WorkMoreGetMorePlusPolicy;
 import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -17,6 +18,7 @@ import store.DbStore;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
@@ -28,6 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 @Component
+@Getter
 public class NormalTaskHandler extends AbsoluteTaskHandler {
 
     @Resource(name = "dispatcherSenderThreadPool")
@@ -56,9 +59,8 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
     private static final ReentrantLock lock = new ReentrantLock();
     //队列是否声明成功
     private volatile AtomicBoolean declare = new AtomicBoolean(false);
-
-
     private volatile MetaHead metaHead = null;
+    private volatile WaterCacheQueue<DownloadTask> cacheQueue;
 
     @Override
     protected MetaHead getMetaHead() {
@@ -73,7 +75,7 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
                 }
 
                 if (metaHead == null) {
-                    WaterCacheQueue<DownloadTask> cacheQueue = new WaterCacheQueue<>(5, 10, new PriorityQueue<>());
+                    cacheQueue = new WaterCacheQueue<>(5, 10, new PriorityBlockingQueue<>());
                     metaHead = new MetaHead()
                             .name("待下载队列任务处理器")
                             .lock(lock)
