@@ -29,8 +29,12 @@ nacos_mq分支：基于nacos和rabitmq的分布式下载器(已完成)
 #### 技术点
 
 
-##### 7.任务调度模型
+##### 8.任务调度模型
 ![](./readme/image/dispatcher.png)
+
+##### 7.多任务处理模型
+![](./readme/image/multiply%20task%20thread%20group%20handler.png)
+
 
 ##### 6.客户端组
 ![](./readme/image/clientGroup.png)
@@ -48,7 +52,7 @@ nacos_mq分支：基于nacos和rabitmq的分布式下载器(已完成)
 ![](./readme/image/时空生产-缓冲队列.png)
 
 ##### 1.分配路由表
-![](./readme/image/分配路由表.png)
+![](./readme/image/routepage.png)
 
 
 ### Nacos +RabbitMq 版本
