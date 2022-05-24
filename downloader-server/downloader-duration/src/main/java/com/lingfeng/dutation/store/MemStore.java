@@ -1,4 +1,4 @@
-package store;
+package com.lingfeng.dutation.store;
 
 /**
  * @Author: wz

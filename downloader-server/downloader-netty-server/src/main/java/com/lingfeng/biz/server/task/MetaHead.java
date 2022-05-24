@@ -7,11 +7,11 @@ import com.lingfeng.biz.server.DownloaderServer;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
 import com.lingfeng.biz.server.policy.DeliverPolicy;
+import com.lingfeng.dutation.store.StoreApi;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import store.StoreApi;
 
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;

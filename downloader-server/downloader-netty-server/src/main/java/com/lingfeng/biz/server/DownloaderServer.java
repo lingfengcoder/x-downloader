@@ -45,16 +45,6 @@ public class DownloaderServer {
         log.info("netty服务已启动");
     }
 
-    public <M> void sendMsg(NodeClient client, M msg, MsgType msgType) {
-        Channel channel = client.getChannel();
-        if (channel != null) {
-            Frame<M> fame = new Frame<>();
-            fame.setTarget(msgType.name());
-            fame.setData(msg);
-            nettyServer.writeAndFlush(channel, fame, Cmd.REQUEST);
-        }
-    }
-
     public BizNettyServer getNettyServer() {
         return nettyServer;
     }

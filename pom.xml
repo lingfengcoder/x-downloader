@@ -55,6 +55,9 @@
         <validation-api.version>2.0.1.Final</validation-api.version>
         <servlet-api.version>4.0.1</servlet-api.version>
         <httpclient.version>4.5.13</httpclient.version>
+
+
+        <mybatis-plus.version>3.4.3.3</mybatis-plus.version>
         <!--        <elasticsearch.version>7.15.0</elasticsearch.version>-->
     </properties>
 

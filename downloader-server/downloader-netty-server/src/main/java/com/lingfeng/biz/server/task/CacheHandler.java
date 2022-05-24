@@ -3,8 +3,9 @@ package com.lingfeng.biz.server.task;
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.TaskState;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
+import com.lingfeng.dutation.store.StoreApi;
 import lombok.extern.slf4j.Slf4j;
-import store.StoreApi;
+
 
 import java.util.List;
 

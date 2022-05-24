@@ -4,16 +4,13 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.lingfeng.biz.downloader.model.*;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.dispatcher.DispatcherRouter;
-import com.lingfeng.biz.server.task.CacheHandler;
 import com.lingfeng.biz.server.task.NormalTaskHandler;
-import javafx.concurrent.Task;
+import com.lingfeng.dutation.store.StoreApi;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import store.StoreApi;
 
-import java.util.List;
 
 /**
  * @Author: wz

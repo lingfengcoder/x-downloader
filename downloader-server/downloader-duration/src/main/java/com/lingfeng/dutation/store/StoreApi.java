@@ -1,4 +1,4 @@
-package store;
+package com.lingfeng.dutation.store;
 
 import java.util.List;
 

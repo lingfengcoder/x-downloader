@@ -33,5 +33,10 @@
             <artifactId>downloader-log</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>lingfeng-biz</groupId>
+            <artifactId>downloader-duration</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>
