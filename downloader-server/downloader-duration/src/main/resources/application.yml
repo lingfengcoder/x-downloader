@@ -1,11 +1,6 @@
 # spring config
-
-
 spring:
-  application:
-    name:  "store"
-    profiles:
-      active: test
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/x-downloader?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai

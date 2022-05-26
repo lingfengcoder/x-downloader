@@ -1,4 +1,4 @@
-package com.lingfeng.biz.server.task;
+package com.lingfeng.biz.server.handler.taskhandler;
 
 @FunctionalInterface
 public interface TaskHandler {

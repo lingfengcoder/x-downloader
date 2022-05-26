@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * @Description: 根据配置动态创建或销毁mq监听
  */
 @Slf4j
-@Component
+//@Component
 @Order(2)
 public class Listener {
     @Resource(name = "downloaderScheduleThreadPool")

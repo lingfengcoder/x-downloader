@@ -1,22 +1,20 @@
-package com.lingfeng.biz.server.handler;
+package com.lingfeng.biz.server.handler.messagehandler.biz;
 
 
-import com.lingfeng.biz.downloader.model.BasicCmd;
 import com.lingfeng.biz.downloader.model.BasicFrame;
-import com.lingfeng.biz.server.dispatcher.NodeClientGroup;
+import com.lingfeng.biz.server.client.NodeClientGroup;
+import com.lingfeng.biz.server.handler.messagehandler.BasicFrameHandler;
 import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.frame.SafeFrame;
 import com.lingfeng.rpc.server.handler.AbsServerHandler;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
-import java.lang.ref.WeakReference;
-import java.util.Collection;
+import javax.annotation.Resource;
 
 @Slf4j
 @Component
@@ -24,6 +22,8 @@ import java.util.Collection;
 //基础处理器 主要负责 管理客户端
 public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<BasicFrame<Object>>> {
 
+    @Resource(name = "dispatcherSenderThreadPool")
+    private ThreadPoolTaskExecutor dispatcherSenderThreadPool;
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<BasicFrame<Object>> data) {
@@ -32,7 +32,9 @@ public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<BasicFrame
         if (cmd == Cmd.REQUEST.code()) {
             BasicFrame<Object> frame = data.getContent();
             log.info(" REQUEST data = {}", frame);
-            frameHandler(ctx, frame);
+            //线程池执行
+            BasicFrameHandler handler = BasicFrameHandler.builder().channel(ctx.channel()).frame(frame).build();
+            dispatcherSenderThreadPool.execute(handler);
         } else ctx.fireChannelRead(data);
     }
 
@@ -50,28 +52,5 @@ public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<BasicFrame
         super.channelInactive(ctx);
     }
 
-    private void frameHandler(ChannelHandlerContext ctx, BasicFrame<Object> frame) {
-        BasicCmd cmd = frame.getCmd();
-        NodeClientGroup clientStore = NodeClientGroup.getInstance();
-        switch (cmd) {
-            //如果是注册帧 注册客户端
-            case REG:
-                Channel channel = ctx.channel();
-                NodeClient client = NodeClient.builder()
-                        .alive(true)//激活状
-                        .channelId(channel.id().asLongText())//channel id
-                        .channel(new WeakReference<>(channel))//channel弱引用
-                        .clientId(frame.getClientId())//注册的客户端的id
-                        .build();
-                clientStore.addNodeClient(client);
-                break;
-            //如果是关闭帧，关闭客户端
-            case CLOSE:
-                String clientId = frame.getClientId();
-                //todo 主动关闭channel
-                clientStore.removeNodeClient(clientId);
-                break;
-        }
-    }
 
 }

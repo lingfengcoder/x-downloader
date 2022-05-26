@@ -16,7 +16,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class TrackQueuePolicy implements DeliverPolicy<QueueInfo, MsgTask> {
+public class TrackQueuePolicy implements RoutePolicy<QueueInfo, MsgTask> {
 
     //简单策略模式
     //1.先感知存活的 执行(消费)队列的长度 2.将任务合理分配给 每个执行队列 剩余空位 3.发送消息

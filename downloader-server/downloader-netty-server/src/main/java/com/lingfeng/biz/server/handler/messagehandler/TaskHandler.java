@@ -1,10 +1,10 @@
-package com.lingfeng.biz.server.handler;
+package com.lingfeng.biz.server.handler.messagehandler;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.lingfeng.biz.downloader.model.*;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
-import com.lingfeng.biz.server.dispatcher.DispatcherRouter;
-import com.lingfeng.biz.server.task.NormalTaskHandler;
+import com.lingfeng.biz.server.handler.taskhandler.NormalTaskHandler;
+import com.lingfeng.biz.server.route.RouterStore;
 import com.lingfeng.dutation.store.StoreApi;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +32,7 @@ public class TaskHandler implements Runnable {
         DownloadTask task = taskFrame.getData();
         String clientId = taskFrame.getClientId();
         //获取路由中心
-        DispatcherRouter<DownloadTask> router = DispatcherRouter.getInstance();
+        RouterStore<DownloadTask> router = RouterStore.getInstance();
         Route<DownloadTask> route = router.getRoute(clientId, taskId);
         if (route == null) {
             log.error("路由表不存在该记录{}", taskFrame);
@@ -68,8 +68,8 @@ public class TaskHandler implements Runnable {
             case TASK_REJECT:
                 //这里采用方案2实现
                 //cache
-                NormalTaskHandler normalTaskHandler = SpringUtil.getBean(NormalTaskHandler.class);
-                WaterCacheQueue<DownloadTask> cacheQueue = normalTaskHandler.getCacheQueue();
+                NormalTaskHandler normalTaskBuilder = SpringUtil.getBean(NormalTaskHandler.class);
+                WaterCacheQueue<DownloadTask> cacheQueue = normalTaskBuilder.getCacheQueue();
                 if (router.removeRouteNode(clientId, taskId)) {
                     //添加给cache 用于再次分配
                     cacheQueue.addMust(route.getData());

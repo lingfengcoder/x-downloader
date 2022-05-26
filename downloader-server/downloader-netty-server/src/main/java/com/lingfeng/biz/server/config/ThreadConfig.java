@@ -39,8 +39,8 @@ public class ThreadConfig {
         }
     }
 
-    @Bean
     //调度器发送线程池
+    @Bean("dispatcherSenderThreadPool")
     public ThreadPoolTaskExecutor dispatcherSenderThreadPool() {
         ThreadFactory factory = ThreadFactoryBuilder.create()
                 .setNamePrefix("##dispatcherSenderThreadPool##").setDaemon(false)

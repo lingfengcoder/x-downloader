@@ -40,7 +40,7 @@ public class Test {
 
     }
 
-    private static void test(DeliverPolicy<QueueInfo, MsgTask> policy, TestData data) {
+    private static void test(RoutePolicy<QueueInfo, MsgTask> policy, TestData data) {
         TestData testData = new TestData();
         BeanUtil.copyProperties(data, testData);
         long start = System.currentTimeMillis();

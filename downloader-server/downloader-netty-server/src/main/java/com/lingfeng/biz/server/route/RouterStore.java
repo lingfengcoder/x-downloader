@@ -1,12 +1,9 @@
-package com.lingfeng.biz.server.dispatcher;
+package com.lingfeng.biz.server.route;
 
 import com.lingfeng.biz.downloader.model.Route;
-import com.lingfeng.biz.downloader.util.ListUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -14,19 +11,19 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @Author: wz
  * @Date: 2022/5/19 16:13
- * @Description: 调度器的路由器
+ * @Description: 路由器存储
  */
 @Slf4j
-public class DispatcherRouter<T> {
+public class RouterStore<T> {
 
     private final Object lock = new Object();
 
-    private DispatcherRouter() {
+    private RouterStore() {
     }
 
-    private static final DispatcherRouter instance = new DispatcherRouter();
+    private static final RouterStore instance = new RouterStore();
 
-    public static DispatcherRouter getInstance() {
+    public static RouterStore getInstance() {
         return instance;
     }
 

@@ -4,8 +4,8 @@ import com.lingfeng.biz.downloader.model.FtpAuth;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
+//import org.springframework.boot.context.properties.ConfigurationProperties;
+//import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Map;
@@ -18,9 +18,9 @@ import java.util.Map;
 @Slf4j
 @Getter
 @Setter
-@Configuration
-@RefreshScope//动态刷新bean
-@ConfigurationProperties(prefix = "downloader")
+//@Configuration
+//@RefreshScope//动态刷新bean
+//@ConfigurationProperties(prefix = "downloader")
 public class FtpConfig {
     private final static String DEFAULT_LOCAL_PATH = "default";
     //ftp授权用户信息

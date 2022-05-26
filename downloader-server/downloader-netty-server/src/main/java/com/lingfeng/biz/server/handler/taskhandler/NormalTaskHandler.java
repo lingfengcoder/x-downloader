@@ -1,4 +1,4 @@
-package com.lingfeng.biz.server.task;
+package com.lingfeng.biz.server.handler.taskhandler;
 
 
 import com.lingfeng.biz.downloader.log.BizLog;
@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @Author: wz
  * @Date: 2021/10/15 11:48
- * @Description: 待下载任务处理类
+ * @Description: 待下载任务处理器构建类
  */
 @Slf4j
 @Component
@@ -50,51 +50,38 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
     private final static AtomicLong lastSendTime = new AtomicLong();
     //缓冲队列执行器最大等待时间
     private final static int MAX_WAIT_TIME = 5 * 1000;//5s
-    //缓冲队列最大长度
-    private final static int MAX_TASK_QUEUE_SIZE = 50;
-    //缓冲任务队列 问题:缓冲队列可能存在任务丢失的情况 需要验证
-    private volatile List<MsgTask> sendList = new ArrayList<>(10);
+
+    private final static int lowWaterLevel = 5;
+    private final static int highWaterLevel = 10;
     //执行锁
     private static final ReentrantLock lock = new ReentrantLock();
-    //队列是否声明成功
-    private volatile AtomicBoolean declare = new AtomicBoolean(false);
-    private volatile MetaHead metaHead = null;
+    private volatile HandlerHead handlerHead = null;
     private volatile WaterCacheQueue<DownloadTask> cacheQueue;
 
     @Override
-    protected MetaHead getMetaHead() {
-
-        if (metaHead == null) {
+    protected HandlerHead getHandlerHead() {
+        if (handlerHead == null) {
             lock.lock();
             try {
-                if (!declare.get()) {
-                    bizLog.log(i -> log.info("队列还未声明绑定，先进行队列绑定"));
 
-                    bizLog.log(i -> log.info("队列声明成功"));
-                }
-
-                if (metaHead == null) {
-                    cacheQueue = new WaterCacheQueue<>(5, 10, new PriorityBlockingQueue<>());
-                    metaHead = new MetaHead()
+                if (handlerHead == null) {
+                    cacheQueue = new WaterCacheQueue<>(lowWaterLevel, highWaterLevel, new PriorityBlockingQueue<>());
+                    handlerHead = new HandlerHead()
                             .name("待下载队列任务处理器")
                             .lock(lock)
                             .cacheQueue(cacheQueue)
-                            //.queue(getTaskQueue())
                             .executorPool(executor)
                             .dispatcherConfig(config)
-                            // .queueConfig(queueConfig)
                             .lastSendTime(lastSendTime)
                             .maxWaitTime(MAX_WAIT_TIME)
-                            // .nacosService(nacosService)
-                            .deliverPolicy(deliverPolicy)
-                            .maxCacheSize(MAX_TASK_QUEUE_SIZE)
+                            .routePolicy(deliverPolicy)
                             .log(bizLog);
                 }
             } finally {
                 lock.unlock();
             }
         }
-        return metaHead;
+        return handlerHead;
     }
 
 

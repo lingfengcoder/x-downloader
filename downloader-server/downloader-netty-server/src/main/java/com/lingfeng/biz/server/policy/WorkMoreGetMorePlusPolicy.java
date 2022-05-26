@@ -19,7 +19,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class WorkMoreGetMorePlusPolicy implements DeliverPolicy<NodeRemain, DownloadTask> {
+public class WorkMoreGetMorePlusPolicy implements RoutePolicy<NodeRemain, DownloadTask> {
 
 
     //简单策略模式

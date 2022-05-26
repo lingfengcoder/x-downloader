@@ -1,7 +1,6 @@
 package com.lingfeng.biz.downloader.util;
 
-import cn.hutool.core.util.RandomUtil;
-import com.alibaba.nacos.common.utils.MD5Utils;
+
 import lombok.extern.slf4j.Slf4j;
 
 import javax.xml.bind.DatatypeConverter;

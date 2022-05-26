@@ -4,16 +4,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Getter
 @Setter
-@Configuration
-@RefreshScope//动态刷新bean
-public class ResultConfig
-{
+//@Configuration
+//@RefreshScope//动态刷新bean
+public class ResultConfig {
 
     @Value("${downloader.callback.secondtime:360}")
     private Long secondCallbackTime;

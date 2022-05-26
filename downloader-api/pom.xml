@@ -15,16 +15,6 @@
         作为下载节点的启动类
     </description>
     <dependencies>
-        <!--        <dependency>-->
-        <!--            <groupId>lingfeng-biz</groupId>-->
-        <!--            <artifactId>downloader-nacos</artifactId>-->
-        <!--            <version>1.0.0</version>-->
-        <!--        </dependency>-->
-        <dependency>
-            <groupId>lingfeng-biz</groupId>
-            <artifactId>downloader-dispatcher</artifactId>
-            <version>1.0.0</version>
-        </dependency>
 
         <dependency>
             <groupId>lingfeng-biz</groupId>

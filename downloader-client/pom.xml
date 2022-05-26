@@ -11,8 +11,20 @@
 
     <artifactId>downloader-client</artifactId>
     <packaging>pom</packaging>
+    <properties>
+        <slf4j-api.version>1.7.31</slf4j-api.version>
+    </properties>
     <modules>
         <module>downloader-downloader</module>
         <module>downloader-ffmpeg</module>
     </modules>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>5.3.9</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

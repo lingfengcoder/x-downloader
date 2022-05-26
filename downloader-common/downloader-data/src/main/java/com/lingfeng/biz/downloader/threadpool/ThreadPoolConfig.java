@@ -38,7 +38,7 @@ public class ThreadPoolConfig {
         }
     }
 
-    @Bean// 调度器定时任务触发线程池
+    @Bean("dispatcherScheduleThreadPool")// 调度器定时任务触发线程池
     public ScheduledThreadPoolExecutor dispatcherScheduleThreadPool() {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
         executor.setMaximumPoolSize(2);
@@ -80,7 +80,6 @@ public class ThreadPoolConfig {
         executorServices.add(executor);
         return executor;
     }
-
 
 
     @Bean//执行下载任务的线程池

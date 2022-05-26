@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.net.ftp.FTPClient;
 
-import java.net.Proxy;
 
 /**
  * @Author: wz

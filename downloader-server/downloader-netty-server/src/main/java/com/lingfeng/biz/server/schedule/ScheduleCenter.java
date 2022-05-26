@@ -1,20 +1,14 @@
-package com.lingfeng.biz.server.dispatcher;
+package com.lingfeng.biz.server.schedule;
 
 
-import cn.hutool.extra.spring.SpringUtil;
-import com.lingfeng.biz.downloader.log.BizLog;
 import com.lingfeng.biz.downloader.threadpool.ThreadUtils;
-import com.lingfeng.biz.server.DownloaderServer;
 import com.lingfeng.biz.server.config.DispatcherConfig;
-import com.lingfeng.biz.server.task.TaskHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -27,10 +21,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-public class DispatcherCenter {
+public class ScheduleCenter {
     @Autowired
-    private DownloaderServer downloaderServer;
-    @Resource(name = "dispatcherScheduleThreadPool")
+    @Qualifier("dispatcherScheduleThreadPool")
     private ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
     @Autowired
     private DispatcherConfig config;
@@ -62,33 +55,9 @@ public class DispatcherCenter {
         // 内部定时任务执行 每秒执行一次
         if (ThreadUtils.isNullOrDone(scheduledFuture)) {
             scheduledFuture =
-                    scheduledThreadPoolExecutor.scheduleAtFixedRate(this::dispatch, 1, config.getIntervalTime(), TimeUnit.MILLISECONDS);
+                    scheduledThreadPoolExecutor.scheduleAtFixedRate(new DispatcherJob(config.getEnable()), 1, config.getIntervalTime(), TimeUnit.MILLISECONDS);
         }
     }
 
-    //执行调度
-    public void dispatch() {
-        if (config.getEnable()) {
-            doWork();
-        }
-    }
-
-
-    private void doWork() {
-        ApplicationContext app = SpringUtil.getApplicationContext();
-        if (app != null) {
-            log.info("下载模块 调度中心开始执行调度");
-            //找出容器中所有的处理器
-            Map<String, TaskHandler> taskHandler = app.getBeansOfType(TaskHandler.class);
-            for (Map.Entry<String, TaskHandler> item : taskHandler.entrySet()) {
-                try {
-                    item.getValue().handler();
-                    //executor.execute(() -> item.getValue().handler());
-                } catch (Exception e) {
-                    log.error(e.getMessage());
-                }
-            }
-        }
-    }
 
 }

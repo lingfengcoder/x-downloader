@@ -27,11 +27,11 @@ public abstract class AbsolutePostProcess {
     //处理方法
     public abstract DownloadNotifyResp handler(DownloadTask t, boolean doNotify);
 
-    @Autowired
+   // @Autowired
     protected NodeConfig config;
-    @Autowired
+  // @Autowired
     protected FtpConfig ftpConfig;
-    @Autowired
+   // @Autowired
     private DelayQueueManager delayQueueManager;
 
     //生成回调数据

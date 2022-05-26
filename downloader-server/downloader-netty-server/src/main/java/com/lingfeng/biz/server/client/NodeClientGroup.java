@@ -1,4 +1,4 @@
-package com.lingfeng.biz.server.dispatcher;
+package com.lingfeng.biz.server.client;
 
 import com.lingfeng.biz.server.model.NodeClient;
 

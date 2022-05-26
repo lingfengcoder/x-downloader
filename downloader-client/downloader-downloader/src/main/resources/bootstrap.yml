@@ -1,0 +1,61 @@
+downloader:
+  dispatcher: #调度器的配置
+    enable: true
+    #是否开启自动定时执行(开启后调度组件将自己周期执行，如果启用xxljob需要关闭)
+    enableSchedule: true
+    #开启自动执行的定时周期(openSchedule=true时才生效)
+    intervalTime: 5000
+    #任务队列缓冲任务数，影响发送速率，数字越小发送越快
+    cacheTaskLen: 30
+    #mq消息管道数
+    channelLimit: 2
+  node: #下载节点的配置
+    enable: true
+    #是否开启自动定时拉取配置
+    enableSchedule: true
+    #下载节点服务名
+    servername: downloader-server
+    #mq管道数量
+    channelLimit: 2
+    #单节点同时下载线程数
+    concurrentLimit: 15
+    #单节点消息队列最大消息数
+    queueLenLimit: 20
+    #处理重试数据的最大消息数 (调度中心在处理重试队列时，会检测是否重试队列已满)
+    retryLenLimit: 1
+    #任务下载失败重试次数
+    failedRetryCount: 3
+    #消息发送并发限制 -1不限制
+    sendLimit: -1
+    #下载完成后是否自动上传到FTP(使用挂载盘方案时不需要上传到FTP上，要关闭 )
+    autoUploadFtp: false
+    #临时下载文件
+    tmpIndex:
+      #临时下载文件的存活时间 3h
+      liveTime: 10800000
+  #ftp存储前缀 把ftp地址转换为 本地路径 ftp://xstore:abc123@172.25.224.110:6069/xstore/xxx/123.mp4 -> /data/xstorage/xxx/123.mp4
+  local-store:
+    defaultPrefix: /iptv/bokong/data/ftp/
+    nodes:
+      - id: 1
+        prefix: /iptv/bokong/data/ftp/
+      - id: 2
+        prefix: /iptv/bokong/data/ftp/
+      - id: 25
+        prefix: /iptv/bokong/data/ftp/
+      - id: 30
+        prefix: /iptv/bokong/data/ftp/
+  ftpUserPath:
+    ostorero: ostorage
+    ostore  : ostorage
+    vstore  : vstorage
+    vstorero: vstorage
+    pstore  : pstorage
+    pstorero: pstorage
+    dstore  : dstorage
+    dstorero: dstorage
+    xstore  : xstorage
+    xstorero: xstorage
+  ftpAuth: #ftp授权用户信息
+    user: vsftpd
+    group: root

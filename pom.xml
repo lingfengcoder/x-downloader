@@ -14,7 +14,6 @@
         <module>downloader-api</module>
         <module>downloader-client</module>
         <module>downloader-server</module>
-        <!--        <module>downloader-rpc</module>-->
     </modules>
 
 
@@ -25,22 +24,13 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
 
-        <spring.version>5.3.8</spring.version>
-        <spring-boot.version>2.5.4</spring-boot.version>
-        <spring-cloud.version>2020.0.3</spring-cloud.version>
-        <spring-cloud-commons.version>3.0.3</spring-cloud-commons.version>
-        <spring-cloud-alibaba.version>2021.1</spring-cloud-alibaba.version>
+        <spring.version>5.3.9</spring.version>
 
-        <alibaba.nacos.version>2.0.3</alibaba.nacos.version>
-        <alibaba.seata.version>1.4.2</alibaba.seata.version>
-        <spring-boot-admin.version>2.5.1</spring-boot-admin.version>
-        <druid.version>1.2.6</druid.version>
         <fastjson.version>1.2.78</fastjson.version>
         <feign-jackson.version>11.7</feign-jackson.version>
         <lombok.version>1.18.20</lombok.version>
-        <xxl-job.version>2.3.0</xxl-job.version>
 
-        <jackson.version> 2.13.2.1</jackson.version>
+        <jackson.version>2.13.2.1</jackson.version>
         <maven-compiler.version>3.8.1</maven-compiler.version>
         <maven-surefire.version>3.0.0-M5</maven-surefire.version>
         <module.version>1.0.0</module.version>
@@ -53,14 +43,10 @@
         <commons-lang.version>2.6</commons-lang.version>
 
         <validation-api.version>2.0.1.Final</validation-api.version>
-        <servlet-api.version>4.0.1</servlet-api.version>
-        <httpclient.version>4.5.13</httpclient.version>
-
 
         <mybatis-plus.version>3.4.3.3</mybatis-plus.version>
         <!--        <elasticsearch.version>7.15.0</elasticsearch.version>-->
     </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -68,69 +54,10 @@
                 <artifactId>x-netty-rpc</artifactId>
                 <version>1.0.0</version>
             </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.alibaba.cloud</groupId>
-                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
-                <version>${spring-cloud-alibaba.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-commons</artifactId>
-                <version>${spring-cloud-commons.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>de.codecentric</groupId>
-                <artifactId>spring-boot-admin-dependencies</artifactId>
-                <version>${spring-boot-admin.version}</version>
-            </dependency>
-
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-        <!--bootstrap 启动器-->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-bootstrap</artifactId>
-            <version>${spring-cloud-commons.version}</version>
-        </dependency>
-        <!--配置文件处理器-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <!--监控客户端-->
-        <dependency>
-            <groupId>de.codecentric</groupId>
-            <artifactId>spring-boot-admin-starter-client</artifactId>
-            <version>${spring-boot-admin.version}</version>
-        </dependency>
-        <!--监控-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
         <!--Lombok-->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -138,13 +65,21 @@
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!--测试依赖-->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

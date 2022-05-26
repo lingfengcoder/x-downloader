@@ -1,4 +1,4 @@
-package com.lingfeng.biz.server.task;
+package com.lingfeng.biz.server.handler.taskhandler;
 
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.TaskCmd;
@@ -13,9 +13,9 @@ import io.netty.channel.Channel;
 /**
  * @Author: wz
  * @Date: 2022/5/20 14:12
- * @Description:
+ * @Description: 发送消息的API
  */
-public class SendeApi {
+public class SendApi {
 
     //发送任务
     public static <M extends DownloadTask> void sendTaskToClient(NodeClient client, M task) {

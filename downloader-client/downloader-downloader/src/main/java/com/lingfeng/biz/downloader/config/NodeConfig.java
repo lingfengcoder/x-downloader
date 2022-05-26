@@ -3,8 +3,10 @@ package com.lingfeng.biz.downloader.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
+//import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.annotation.Order;
 
 /**
@@ -18,7 +20,9 @@ import org.springframework.core.annotation.Order;
 @Order(1)
 //@Accessors(fluent = true)
 //@NacosPropertySource(dataId = "biz-downloader-dev.yaml", groupId = "biz", autoRefreshed = true)
-@RefreshScope//动态刷新bean
+//@RefreshScope//动态刷新bean
+@PropertySource("classpath:bbq.properties")
+@ComponentScan({"com.lingfeng.biz.downloader.config"})
 public class NodeConfig {
     //单节点消费开关
     @Value("${downloader.node.enable}")
@@ -54,4 +58,6 @@ public class NodeConfig {
     //临时下载文件的存活时间
     // @Value("${downloader.node.tmpIndex.timeCron}")
     // private String tmpIndexTimeCron;
+
+
 }

@@ -8,24 +8,24 @@ import com.lingfeng.biz.downloader.model.ResultInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.*;
+
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+
 
 import javax.annotation.Resource;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-@Component
+//@Component
 @Slf4j
 @Order(2)
 public class DelayQueueManager {
     @Resource(name = "testDelay")
     private ScheduledThreadPoolExecutor testDelaySchedule;
-    @Autowired
-    // @Qualifier("balanceHttp") //需要指定 用负载的restTemplate
-    private RestTemplate balanceHttp;
+    //    @Autowired
+//    // @Qualifier("balanceHttp") //需要指定 用负载的restTemplate
+//    private RestTemplate balanceHttp;
     @Autowired
     private ResultConfig resultConfig;
 
@@ -87,10 +87,11 @@ public class DelayQueueManager {
     }
 
     private boolean callback(ResultInfo resultInfo) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<String> result = balanceHttp.postForEntity(resultInfo.getUrl(), new HttpEntity<>(resultInfo.getBody(), headers), String.class);
-        return HttpStatus.OK.equals(result.getStatusCode());
+        // HttpHeaders headers = new HttpHeaders();
+        //  headers.setContentType(MediaType.APPLICATION_JSON);
+        //  ResponseEntity<String> result = balanceHttp.postForEntity(resultInfo.getUrl(), new HttpEntity<>(resultInfo.getBody(), headers), String.class);
+        // return HttpStatus.OK.equals(result.getStatusCode());
+        return false;
     }
 
     /**

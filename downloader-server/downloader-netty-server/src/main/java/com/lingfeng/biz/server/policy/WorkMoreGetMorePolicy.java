@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-public class WorkMoreGetMorePolicy implements DeliverPolicy<QueueInfo, MsgTask> {
+public class WorkMoreGetMorePolicy implements RoutePolicy<QueueInfo, MsgTask> {
     //上一次发布消息的优先级
     private static volatile Map<QueueInfo, Integer> lastQueuePriority = new HashMap<>();
     //上一次同步优先级的时间
