@@ -3,7 +3,6 @@ package com.lingfeng.biz.server.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
@@ -18,7 +17,7 @@ import org.springframework.core.annotation.Order;
 @Order(1)
 //@Accessors(fluent = true)
 //@NacosPropertySource(dataId = "biz-downloader-dev.yaml", groupId = "biz", autoRefreshed = true)
-@RefreshScope//动态刷新bean
+//@RefreshScope//动态刷新bean
 public class DispatcherConfig {
 
 

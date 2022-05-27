@@ -18,12 +18,12 @@ import static com.lingfeng.biz.downloader.util.UrlParser.*;
  * http://172.1.1.1:9090/a/b/c/index.m3u8 => /data/a/b/c/index.m3u8
  * ftp://vstore:pwd@127.0.0.1:8868/a/b/c/index.m3u8 =>/data/vstorage/a/b/c/index.m3u8
  */
-//@Component
+@Component
 public class LocalPathTranService {
 
-    @Autowired
+   // @Autowired
     private StoreConfig storeConfig;
-    @Autowired
+   // @Autowired
     private FtpConfig ftpConfig;
 
     // ftp://vstore:pwd@127.0.0.1:8868/a/b/c/index.m3u8 =>/data/vstorage/a/b/c/index.m3u8

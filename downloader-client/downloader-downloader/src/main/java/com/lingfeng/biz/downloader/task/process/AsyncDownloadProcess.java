@@ -21,8 +21,6 @@ import org.springframework.stereotype.Component;
 public class AsyncDownloadProcess {
 
     @Autowired
-    private Listener listener;
-    @Autowired
     private MultiplyTaskHandler taskHandler;
 
 

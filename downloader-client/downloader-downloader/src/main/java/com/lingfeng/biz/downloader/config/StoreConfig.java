@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 //import org.springframework.boot.context.properties.ConfigurationProperties;
 //import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
@@ -21,9 +22,9 @@ import java.util.List;
 //@ConfigurationProperties(prefix = "downloader.local-store")
 public class StoreConfig {
     //ftp挂载本地的 本地路径前缀
-    //@Value("${downloader.localStore.defaultPrefix}")
+    @Value("${node.localStore.defaultPrefix}")
     private String defaultPrefix;
-    //@Value("${downloader.localStore.nodes}")
+    @Value("${node.localStore.nodes}")
     private List<LocalStoreInfo> nodes;
 
     public String getPrefixById(long id) {

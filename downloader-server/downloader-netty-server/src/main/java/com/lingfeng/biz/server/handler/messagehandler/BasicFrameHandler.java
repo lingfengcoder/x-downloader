@@ -35,6 +35,7 @@ public class BasicFrameHandler implements Runnable {
                         .channelId(channel.id().asLongText())//channel id
                         .channel(new WeakReference<>(channel))//channel弱引用
                         .clientId(frame.getClientId())//注册的客户端的id
+                        .modifyTime(System.currentTimeMillis())//注册时间
                         .build();
                 clientStore.addNodeClient(client);
                 break;
