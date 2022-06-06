@@ -3,10 +3,12 @@ package com.lingfeng.biz.server.route;
 import com.lingfeng.biz.downloader.model.Route;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @Author: wz
@@ -39,42 +41,46 @@ public class RouterStore<T> {
     }
 
     //添加路由
+    //添加路由  经过多线程测试 没得问题
     public void addRoute(String key, List<Route<T>> list) {
-        List<Route<T>> old = routePage.get(key);
-        if (old == null) {
-            synchronized (lock) {
-                old = routePage.get(key);
-                if (old == null) {
-                    routePage.put(key, list);
-                } else {
-                    old.addAll(list);
-                }
-            }
-        } else {
-            synchronized (lock) {
-                old.addAll(list);
-            }
+        boolean second = true;
+        if (!routePage.containsKey(key)) {
+            final AtomicBoolean first = new AtomicBoolean(false);
+            routePage.computeIfAbsent(key, t -> {
+                first.set(true);
+                return list;
+            });
+            second = !first.get();
+        }
+        if (second) {
+            routePage.computeIfPresent(key, (k, arr) -> {
+                arr.addAll(list);
+                return arr;
+            });
         }
     }
 
-    //添加路由
-    public void addRoute(String key, Route route) {
-        List<Route<T>> old = routePage.get(key);
-        if (old == null) {
-            synchronized (lock) {
-                old = routePage.get(key);
-                if (old == null) {
-                    routePage.put(key, Arrays.asList(route));
-                } else {
-                    old.add(route);
-                }
-            }
-        } else {
-            synchronized (lock) {
-                old.add(route);
-            }
+    //添加路由 经过多线程测试 没得问题
+    public void addRoute(String key, Route<T> route) {
+        boolean second = true;
+        if (!routePage.containsKey(key)) {
+            final AtomicBoolean first = new AtomicBoolean(false);
+            routePage.computeIfAbsent(key, t -> {
+                first.set(true);
+                ArrayList<Route<T>> base = new ArrayList<>();
+                base.add(route);
+                return base;
+            });
+            second = !first.get();
+        }
+        if (second) {
+            routePage.computeIfPresent(key, (k, arr) -> {
+                arr.add(route);
+                return arr;
+            });
         }
     }
+
 
     //获取路由详情
     public List<Route<T>> getRoute(String key) {

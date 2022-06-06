@@ -50,15 +50,17 @@ public class NettyRpcClient {
     }
 
     private static void start() {
-        instance.loadApplicationContext();
+        prepared();
         NodeConfig config = instance.config;
         //启动客户端
         Address address = new Address(config.getServerHost(), config.getServerPort());
-        BizNettyClient bizNettyClient = NettyClientFactory.buildBizNettyClient(address, new BasicHandler(), new NettyReqHandler());
+        BizNettyClient bizNettyClient = NettyClientFactory.buildBizNettyClient(address, () -> Arrays.asList(new BasicHandler(), new NettyReqHandler()));
         defiedClient(config, bizNettyClient);
         bizNettyClient.start();
+    }
 
-
+    private static void prepared() {
+        instance.loadApplicationContext();
     }
 
     private static void defiedClient(NodeConfig config, BizNettyClient bizNettyClient) {

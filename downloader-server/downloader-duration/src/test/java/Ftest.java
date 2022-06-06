@@ -19,7 +19,7 @@ public class Ftest {
     private DbStore dbStore;
 
     public void test() {
-        dbStore.tans();
+        //dbStore.tans();
     }
 
 }

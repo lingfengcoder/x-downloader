@@ -1,7 +1,7 @@
 package com.lingfeng.biz.downloader.controller;
 
 import cn.hutool.core.io.FileUtil;
-import com.lingfeng.biz.downloader.config.HttpClient;
+
 import com.lingfeng.biz.downloader.model.FTPUrlInfo;
 import com.lingfeng.biz.downloader.model.M3u8;
 import com.lingfeng.biz.downloader.model.Proxy;
@@ -10,14 +10,13 @@ import com.lingfeng.biz.downloader.util.FTPUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
-import org.springframework.http.*;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+
+import org.springframework.http.MediaType;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.RequestCallback;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 
 import java.io.File;
 import java.io.FileOutputStream;

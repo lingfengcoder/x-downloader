@@ -14,5 +14,6 @@
 
     <modules>
         <module>downloader-netty-server</module>
+        <module>downloader-duration</module>
     </modules>
 </project>
