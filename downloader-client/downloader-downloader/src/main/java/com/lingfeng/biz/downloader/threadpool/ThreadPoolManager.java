@@ -18,7 +18,7 @@ import java.util.concurrent.*;
  */
 @Slf4j
 @Configuration
-public class ThreadPoolConfig {
+public class ThreadPoolManager {
 
     List<ExecutorService> executorServices = new ArrayList<>();
     List<ThreadPoolTaskExecutor> taskExecutors = new ArrayList<>();
@@ -38,20 +38,6 @@ public class ThreadPoolConfig {
         }
     }
 
-    @Bean("dispatcherScheduleThreadPool")// 调度器定时任务触发线程池
-    public ScheduledThreadPoolExecutor dispatcherScheduleThreadPool() {
-        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-        executor.setMaximumPoolSize(2);
-        executor.setRemoveOnCancelPolicy(true);
-        executor.setKeepAliveTime(5, TimeUnit.SECONDS);
-        ThreadFactory factory = ThreadFactoryBuilder.create()
-                .setDaemon(false).setNamePrefix("##dispatcherScheduleThreadPool##").build();
-        executor.setThreadFactory(factory);
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-        executorServices.add(executor);
-        return executor;
-    }
-
     @Bean//下载器 定时任务触发线程池
     public ScheduledThreadPoolExecutor downloaderScheduleThreadPool() {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(2);
@@ -65,8 +51,6 @@ public class ThreadPoolConfig {
         executorServices.add(executor);
         return executor;
     }
-
-
     @Bean//下载器 定时任务触发线程池
     public ScheduledThreadPoolExecutor testDelay() {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
@@ -80,7 +64,6 @@ public class ThreadPoolConfig {
         executorServices.add(executor);
         return executor;
     }
-
 
     @Bean//执行下载任务的线程池
     public ThreadPoolTaskExecutor downloaderThreadPool() {

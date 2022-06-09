@@ -1,7 +1,10 @@
 package com.lingfeng.biz.server.handler.taskhandler;
 
 
-import com.lingfeng.biz.downloader.model.*;
+import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.NodeRemain;
+import com.lingfeng.biz.downloader.model.QueueInfo;
+import com.lingfeng.biz.downloader.model.RouteResult;
 import com.lingfeng.biz.server.cache.CacheManage;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.client.NodeClientGroup;

@@ -14,7 +14,7 @@
     <modules>
         <module>downloader-bizpool</module>
         <module>downloader-data</module>
-        <module>downloader-log</module>
-        <module>downloader-store</module>
+        <module>download-threadpool</module>
+
     </modules>
 </project>

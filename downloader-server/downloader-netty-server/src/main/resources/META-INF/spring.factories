@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.lingfeng.biz.server.DownloaderServer,\
- 
+com.lingfeng.biz.server.DownloaderServer

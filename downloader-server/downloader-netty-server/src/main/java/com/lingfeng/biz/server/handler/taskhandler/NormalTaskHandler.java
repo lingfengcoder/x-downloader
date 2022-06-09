@@ -1,7 +1,7 @@
 package com.lingfeng.biz.server.handler.taskhandler;
 
 
-import com.lingfeng.biz.downloader.log.BizLog;
+
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.MsgTask;
 import com.lingfeng.biz.server.DownloaderServer;
@@ -41,8 +41,7 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
     private WorkMoreGetMorePlusPolicy deliverPolicy;
     @Autowired
     private DownloaderServer downloaderServer;
-    @Autowired
-    private BizLog bizLog;
+
     @Autowired
     private DbStore store;
 
@@ -74,8 +73,8 @@ public class NormalTaskHandler extends AbsoluteTaskHandler {
                             .dispatcherConfig(config)
                             .lastSendTime(lastSendTime)
                             .maxWaitTime(MAX_WAIT_TIME)
-                            .routePolicy(deliverPolicy)
-                            .log(bizLog);
+                            .dbStore(store)
+                            .routePolicy(deliverPolicy);
                 }
             } finally {
                 lock.unlock();

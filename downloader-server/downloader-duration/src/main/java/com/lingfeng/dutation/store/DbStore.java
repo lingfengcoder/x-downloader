@@ -2,7 +2,6 @@ package com.lingfeng.dutation.store;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.baomidou.mybatisplus.test.autoconfigure.MybatisPlusTest;
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.dutation.store.mapper.DownloadTaskMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@MybatisPlusTest
 public class DbStore implements StoreApi<DownloadTask> {
     @Autowired
     private DownloadTaskMapper downloadTaskMapper;

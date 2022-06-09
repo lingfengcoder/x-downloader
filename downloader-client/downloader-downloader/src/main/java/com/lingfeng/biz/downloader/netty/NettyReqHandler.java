@@ -40,10 +40,8 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
                     Frame<Object> resp = new Frame<>();
                     resp.setData(ret);
                     writeAndFlush(ctx.channel(), resp, Cmd.RESPONSE);
-
                 }, name, frame.getData());
             });
-
         } else {
            // ctx.fireChannelRead(data);
         }

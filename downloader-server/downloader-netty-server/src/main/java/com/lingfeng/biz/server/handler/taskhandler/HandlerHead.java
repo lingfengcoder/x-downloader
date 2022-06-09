@@ -1,6 +1,5 @@
 package com.lingfeng.biz.server.handler.taskhandler;
 
-import com.lingfeng.biz.downloader.log.BizLog;
 import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.NodeRemain;
 import com.lingfeng.biz.server.DownloaderServer;
@@ -44,8 +43,6 @@ public class HandlerHead {
     private DispatcherConfig dispatcherConfig;
 
     private DownloaderServer downloaderServer;
-
-    private BizLog log;
 
     private StoreApi<DownloadTask> dbStore;
 

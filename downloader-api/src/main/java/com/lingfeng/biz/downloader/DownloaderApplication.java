@@ -1,9 +1,11 @@
 package com.lingfeng.biz.downloader;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 import java.net.InetAddress;
 
@@ -14,11 +16,10 @@ import java.net.InetAddress;
 
 
 @SpringBootApplication
-//@EnableFeignClients(basePackages = "com.lingfeng.biz.common.api.feign")
+@ComponentScan(basePackages = "com.lingfeng")
+@MapperScan("com.lingfeng.dutation.store")
 public class DownloaderApplication implements CommandLineRunner {
 
-    @Value("${server.port}")
-    public String port;
 
     public static void main(String[] args) {
         SpringApplication.run(DownloaderApplication.class, args);
@@ -26,6 +27,6 @@ public class DownloaderApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("Swagger地址：http://" + InetAddress.getLocalHost().getHostAddress() + ":" + port + "/doc.html");
+        //  System.out.println("Swagger地址：http://" + InetAddress.getLocalHost().getHostAddress() + ":" + port + "/doc.html");
     }
 }

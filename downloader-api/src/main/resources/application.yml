@@ -1,0 +1,21 @@
+# spring config
+spring:
+  application:
+    name: download-api
+  profiles:
+    active: dev
+#  main:
+#    allow-bean-definition-overriding: true
+# log config
+log:
+  file:
+    path: /biz/x-download/${spring.application.name}/
+    name: info
+    suffix: log
+    compress:
+      suffix: gz
+logging:
+  file:
+    name: ${log.file.path}${log.file.name}.${log.file.suffix}
+  pattern:
+    file: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID}){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"

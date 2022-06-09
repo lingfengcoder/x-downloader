@@ -10,19 +10,16 @@ import java.util.Date;
 
 /**
  * 任务表
- *
+ *com.lingfeng.biz.downloader.model.DownloadTask
  * @author wz
  * @date 2022-05-19 13:55:19
  */
 @Data
 @Accessors(chain = true)
 @Builder
-public class DownloadTask implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class DownloadTask implements Comparable<DownloadTask>, Serializable {
 
-    /**
-     *
-     */
+    private static final long serialVersionUID = 1L;
 
     private Integer id;
     /**
@@ -58,4 +55,9 @@ public class DownloadTask implements Serializable {
      */
     private Date updateTime;
 
+
+    @Override
+    public int compareTo(DownloadTask o) {
+        return 0;
+    }
 }

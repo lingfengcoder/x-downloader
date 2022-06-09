@@ -1,7 +1,7 @@
 package com.lingfeng.biz.server.schedule;
 
 
-import com.lingfeng.biz.downloader.threadpool.ThreadUtils;
+import com.lingfeng.biz.downloader.util.ThreadUtils;
 import com.lingfeng.biz.server.config.DispatcherConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

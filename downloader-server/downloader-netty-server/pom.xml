@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>lingfeng-biz</groupId>
-            <artifactId>downloader-log</artifactId>
+            <artifactId>download-threadpool</artifactId>
             <version>1.0.0</version>
         </dependency>
         <dependency>

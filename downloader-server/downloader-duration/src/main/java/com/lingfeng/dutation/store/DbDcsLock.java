@@ -1,6 +1,5 @@
 package com.lingfeng.dutation.store;
 
-import com.baomidou.mybatisplus.test.autoconfigure.MybatisPlusTest;
 import com.lingfeng.dutation.store.mapper.LockMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,6 @@ import java.util.function.Function;
  */
 @Slf4j
 @Component
-@MybatisPlusTest
 public class DbDcsLock {
 
     @Resource

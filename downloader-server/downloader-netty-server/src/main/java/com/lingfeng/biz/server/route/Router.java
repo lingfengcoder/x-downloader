@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -40,7 +41,7 @@ public class Router {
                                                        DispatcherConfig dispatcherConfig,
                                                        RoutePolicy<NodeRemain, DownloadTask> routePolicy) {
         try {
-            Integer nodeMaxTaskCount = dispatcherConfig.getQueueLenLimit();
+            Integer nodeMaxTaskCount = dispatcherConfig.getTaskLimit();
             //缓冲长度 (待发送数据长度)
             int total = cacheQueue.size();
             //没有要发送的数据
@@ -55,14 +56,15 @@ public class Router {
             ConcurrentMap<String, List<Route<DownloadTask>>> routePage = router.getRoutePage();
             //将路由表转成权重
             List<NodeRemain> nodeRemainList = new ArrayList<>();
-            for (String clientId : routePage.keySet()) {
-                NodeClient client = clientStore.getClient(clientId);
+            Collection<NodeClient> clients = clientStore.getClients();
+            for (NodeClient client : clients) {
                 //note 只有活跃的客户端才能参与本次路由
                 if (!client.isAlive()) continue;
                 NodeRemain nodeRemain = new NodeRemain();
-                nodeRemain.setClientId(clientId);
+                nodeRemain.setClientId(client.getClientId());
                 //节点剩余
-                nodeRemain.setRemain(nodeMaxTaskCount - routePage.get(clientId).size());
+                List<Route<DownloadTask>> routes = routePage.get(client.getClientId());
+                nodeRemain.setRemain(nodeMaxTaskCount - (routes == null ? 0 : routes.size()));
                 //设置节点最多消费个数
                 nodeRemain.setMax(nodeMaxTaskCount);
                 nodeRemainList.add(nodeRemain);
@@ -81,18 +83,20 @@ public class Router {
             }
 
             //添加路由信息 (将任务从cache中移动到路由表中)
-            for (NodeRemain node : deliverData.keySet()) {
-                String clientId = node.getClientId();
-                List<DownloadTask> sendQueue = deliverData.get(node);
-                List<Route<DownloadTask>> routes =
-                        sendQueue.stream().map(t -> {
-                            Route<DownloadTask> route = new Route<>();
-                            route.setId(t.getId().toString());
-                            route.setTarget(clientId);
-                            route.setData(t);
-                            return route;
-                        }).collect(Collectors.toList());
-                router.addRoute(clientId, routes);
+            if (deliverData != null) {
+                for (NodeRemain node : deliverData.keySet()) {
+                    String clientId = node.getClientId();
+                    List<DownloadTask> sendQueue = deliverData.get(node);
+                    List<Route<DownloadTask>> routes =
+                            sendQueue.stream().map(t -> {
+                                Route<DownloadTask> route = new Route<>();
+                                route.setId(t.getId().toString());
+                                route.setTarget(clientId);
+                                route.setData(t);
+                                return route;
+                            }).collect(Collectors.toList());
+                    router.addRoute(clientId, routes);
+                }
             }
             //发送任务
             if (!CollectionUtils.isEmpty(deliverData)) {
