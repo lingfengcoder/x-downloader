@@ -3,6 +3,7 @@ package com.lingfeng.biz.downloader.model;
 import com.lingfeng.biz.downloader.task.callback.api.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.Date;
@@ -16,6 +17,7 @@ import java.util.Objects;
 @Setter
 @Getter
 @Accessors(chain = true)
+@ToString
 public class DownloadTask implements Comparable<DownloadTask> {
     //任务id
     private String taskId;

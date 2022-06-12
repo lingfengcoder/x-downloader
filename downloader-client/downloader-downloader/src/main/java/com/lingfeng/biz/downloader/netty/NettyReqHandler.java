@@ -1,6 +1,8 @@
 package com.lingfeng.biz.downloader.netty;
 
 import cn.hutool.extra.spring.SpringUtil;
+import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.TaskFrame;
 import com.lingfeng.rpc.client.handler.AbsClientHandler;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.data.Frame;
@@ -11,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @Slf4j
-public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
+public class NettyReqHandler extends AbsClientHandler<SafeFrame<TaskFrame<DownloadTask>>> {
 
     private volatile ThreadPoolTaskExecutor executor;
 
@@ -19,7 +21,7 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
         if (executor == null) {
             synchronized (this) {
                 if (executor == null) {
-                    executor = SpringUtil.getBean("dispatcherThreadPool");
+                    executor = SpringUtil.getBean("downloaderThreadPool");
                 }
             }
         }
@@ -27,10 +29,12 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<Frame<?>> data) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<TaskFrame<DownloadTask>> data) throws Exception {
         byte cmd = data.getCmd();
         if (cmd == Cmd.REQUEST.code()) {
-            Frame<?> frame = data.getContent();
+            TaskFrame<DownloadTask> frame = data.getContent();
+
+            DownloadTask data1 = frame.getData();
             String name = frame.getTarget();
             //使用线程池处理任务
             getExecutor().execute(() -> {
@@ -43,7 +47,7 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<Frame<?>>> {
                 }, name, frame.getData());
             });
         } else {
-           // ctx.fireChannelRead(data);
+           ctx.fireChannelRead(data);
         }
     }
 }

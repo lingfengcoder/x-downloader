@@ -35,6 +35,8 @@ public class BasicHandler extends AbsClientHandler<SafeFrame<BasicFrame<?>>> {
                     //todo 考虑重试注册
                 }
             }
+        }else {
+            ctx.fireChannelRead(data);
         }
     }
 

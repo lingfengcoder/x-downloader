@@ -21,13 +21,13 @@ public class SendApi {
     public static <M extends DownloadTask> void sendTaskToClient(NodeClient client, M task) {
         Channel channel = client.getChannel();
         BizNettyServer server = DownloaderServer.getInstance();
-        TaskFrame<Object> frame = TaskFrame.builder()
-                .taskId(task.getId().toString())
-                .clientId(client.getClientId())
-                .target("listenTask")//rpc目标方法
-                .taskCmd(TaskCmd.NEW_TASK)//新任务
-                .data(task)
-                .build();
+        TaskFrame<M> frame = new TaskFrame<>();
+        frame.setTaskId(task.getId().toString())
+                .setClientId(client.getClientId())
+                .setTarget("listenTask")//rpc目标方法
+                .setTaskCmd(TaskCmd.NEW_TASK)//新任务
+                //.setClazz(DownloadTask.class)
+                .setData(task);
         server.writeAndFlush(channel, frame, Cmd.REQUEST);
     }
 }

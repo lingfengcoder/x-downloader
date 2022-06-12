@@ -9,6 +9,7 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.ComponentScans;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.annotation.Order;
@@ -33,7 +34,7 @@ import java.util.Properties;
 //@NacosPropertySource(dataId = "biz-downloader-dev.yaml", groupId = "biz", autoRefreshed = true)
 //@RefreshScope//动态刷新bean
 @PropertySource("classpath:" + NodeConfig.PROPERTY_FILE)
-@ComponentScan("com.lingfeng.biz.downloader")
+@ComponentScans({@ComponentScan("com.lingfeng.biz.downloader"),@ComponentScan("com.lingfeng.rpc"), @ComponentScan("cn.hutool")})
 public class NodeConfig {
     public final static String PROPERTY_FILE = "client.properties";
     //单节点消费开关
