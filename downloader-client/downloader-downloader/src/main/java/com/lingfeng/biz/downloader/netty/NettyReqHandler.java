@@ -8,6 +8,7 @@ import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.data.Frame;
 import com.lingfeng.rpc.frame.SafeFrame;
 import com.lingfeng.rpc.invoke.RpcInvokeProxy;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -35,12 +36,13 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<TaskFrame<Downlo
             TaskFrame<DownloadTask> frame = data.getContent();
             DownloadTask data1 = frame.getData();
             String name = frame.getTarget();
+            Channel channel = ctx.channel();
             //使用线程池处理任务
             getExecutor().execute(() -> {
                 //代理执行方法
-                RpcInvokeProxy.invoke(ret -> {
-                    FinishNotify finishNotify;
-                    finishNotify.finish(666,"666");
+                RpcInvokeProxy.invoke(channel, ret -> {
+                    // FinishNotify finishNotify;
+                    // finishNotify.finish(666,"666");
                     //返回数据
                     Frame<Object> resp0 = new Frame<>();
                     TaskFrame<DownloadTask> resp = new TaskFrame<>();

@@ -1,13 +1,17 @@
 package com.lingfeng.biz.server.handler.messagehandler.biz;
 
 
-import com.lingfeng.biz.downloader.model.BasicFrame;
+import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.TaskFrame;
 import com.lingfeng.biz.server.client.NodeClientGroup;
-import com.lingfeng.biz.server.handler.messagehandler.BasicFrameHandler;
 import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.rpc.constant.Cmd;
+import com.lingfeng.rpc.data.Frame;
+import com.lingfeng.rpc.data.RpcInvokeFrame;
 import com.lingfeng.rpc.frame.SafeFrame;
+import com.lingfeng.rpc.invoke.RpcInvokeProxy;
 import com.lingfeng.rpc.server.handler.AbsServerHandler;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
@@ -20,21 +24,39 @@ import javax.annotation.Resource;
 @Component
 @ChannelHandler.Sharable //共享的处理器 因为是默认单例
 //基础处理器 主要负责 管理客户端
-public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<BasicFrame<Object>>> {
+public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<RpcInvokeFrame>> {
 
     @Resource(name = "dispatcherSenderThreadPool")
     private ThreadPoolTaskExecutor dispatcherSenderThreadPool;
 
+
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<BasicFrame<Object>> data) {
+    protected void channelRead0(ChannelHandlerContext ctx, SafeFrame<RpcInvokeFrame> data) {
         byte cmd = data.getCmd();
+        if (cmd == Cmd.TEST.code()) {
+            {
+                log.info("channelRead0 receive string msg={}", data.getContent());
+                return;
+            }
+        }
         // request 主要处理client的请求，比如 客户端主动请求获取最新的配置 客户端注册
         if (cmd == Cmd.REQUEST.code()) {
-            BasicFrame<Object> frame = data.getContent();
-            log.info(" REQUEST data = {}", frame);
+            log.info("channelRead0 receive RpcInvokeFrame={}", data);
+            RpcInvokeFrame frame = data.getContent();
             //线程池执行
-            BasicFrameHandler handler = BasicFrameHandler.builder().channel(ctx.channel()).frame(frame).build();
-            dispatcherSenderThreadPool.execute(handler);
+            // BasicFrameHandler handler = BasicFrameHandler.builder().channel(ctx.channel()).frame(frame).build();
+            Channel channel = ctx.channel();
+            dispatcherSenderThreadPool.execute(() -> {
+                log.info("channel={}", channel.id());
+                RpcInvokeProxy.invoke(channel, ret -> {
+                    // FinishNotify finishNotify;
+                    // finishNotify.finish(666,"666");
+                    //返回数据
+                    Frame<Object> resp0 = new Frame<>();
+                    TaskFrame<DownloadTask> resp = new TaskFrame<>();
+                    writeAndFlush(ctx.channel(), resp, Cmd.RESPONSE);
+                }, frame);
+            });
         } else ctx.fireChannelRead(data);
     }
 

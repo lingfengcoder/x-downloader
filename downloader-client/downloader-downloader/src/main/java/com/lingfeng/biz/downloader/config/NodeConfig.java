@@ -3,6 +3,7 @@ package com.lingfeng.biz.downloader.config;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.net.NetUtil;
+import com.lingfeng.rpc.ann.EnableRpcClient;
 import com.lingfeng.rpc.util.StringUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,8 +34,9 @@ import java.util.Properties;
 //@Accessors(fluent = true)
 //@NacosPropertySource(dataId = "biz-downloader-dev.yaml", groupId = "biz", autoRefreshed = true)
 //@RefreshScope//动态刷新bean
+@EnableRpcClient("com.lingfeng.biz.downloader.netty.serverapi")
 @PropertySource("classpath:" + NodeConfig.PROPERTY_FILE)
-@ComponentScans({@ComponentScan("com.lingfeng.biz.downloader"),@ComponentScan("com.lingfeng.rpc"), @ComponentScan("cn.hutool")})
+@ComponentScans({@ComponentScan("com.lingfeng.biz.downloader"), @ComponentScan("com.lingfeng.rpc"), @ComponentScan("cn.hutool")})
 public class NodeConfig {
     public final static String PROPERTY_FILE = "client.properties";
     //单节点消费开关

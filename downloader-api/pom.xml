@@ -84,9 +84,7 @@
                 <directory>src/main/resources</directory>
                 <includes>
                     <!-- 根据目录下的文件配置需要扫描的文件类型 -->
-                    <include>**/*.yml</include>
-                    <include>**/*.properties</include>
-                    <include>**/*.xml</include>
+                    <include>*/**</include>
                 </includes>
                 <filtering>false</filtering>
             </resource>

@@ -12,17 +12,6 @@
     <artifactId>downloader-netty-server</artifactId>
 
     <dependencies>
-
-        <dependency>
-            <groupId>lingfeng-biz</groupId>
-            <artifactId>rpc-core</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>lingfeng-biz</groupId>
-            <artifactId>rpc-data</artifactId>
-            <version>1.0.0</version>
-        </dependency>
         <dependency>
             <groupId>lingfeng-biz</groupId>
             <artifactId>rpc-spring</artifactId>

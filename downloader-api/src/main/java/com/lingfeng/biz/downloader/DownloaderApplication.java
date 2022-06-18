@@ -16,7 +16,7 @@ import java.net.InetAddress;
 
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.lingfeng")
+@ComponentScan(basePackages = "com.lingfeng.**")
 @MapperScan("com.lingfeng.dutation.store")
 public class DownloaderApplication implements CommandLineRunner {
 
