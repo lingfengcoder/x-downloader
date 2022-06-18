@@ -25,6 +25,11 @@
         </dependency>
         <dependency>
             <groupId>lingfeng-biz</groupId>
+            <artifactId>rpc-spring</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>lingfeng-biz</groupId>
             <artifactId>downloader-data</artifactId>
             <version>1.0.0</version>
         </dependency>

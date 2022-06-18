@@ -3,16 +3,14 @@ package com.lingfeng.biz.downloader.netty;
 import com.lingfeng.biz.downloader.NettyRpcClient;
 import com.lingfeng.biz.downloader.model.BasicCmd;
 import com.lingfeng.biz.downloader.model.BasicFrame;
-import com.lingfeng.biz.downloader.model.TaskCmd;
-import com.lingfeng.biz.downloader.model.TaskFrame;
+import com.lingfeng.biz.downloader.netty.serverapi.RegisterAction;
 import com.lingfeng.rpc.client.handler.AbsClientHandler;
 import com.lingfeng.rpc.client.nettyclient.BizNettyClient;
 import com.lingfeng.rpc.constant.Cmd;
-import com.lingfeng.rpc.data.Frame;
 import com.lingfeng.rpc.frame.SafeFrame;
+import com.lingfeng.rpc.invoke.RemoteInvoke;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * @Author: wz
@@ -35,7 +33,7 @@ public class BasicHandler extends AbsClientHandler<SafeFrame<BasicFrame<?>>> {
                     //todo 考虑重试注册
                 }
             }
-        }else {
+        } else {
             ctx.fireChannelRead(data);
         }
     }
@@ -56,6 +54,9 @@ public class BasicHandler extends AbsClientHandler<SafeFrame<BasicFrame<?>>> {
                 .cmd(BasicCmd.REG)
                 .clientId(clientId)
                 .build();
-        nettyClient.writeAndFlush(frame, Cmd.REQUEST);
+
+        RegisterAction proxy = RemoteInvoke.getProxy(RegisterAction.class);
+        proxy.register(frame);
+        // nettyClient.writeAndFlush(frame, Cmd.REQUEST);
     }
 }

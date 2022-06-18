@@ -33,21 +33,23 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<TaskFrame<Downlo
         byte cmd = data.getCmd();
         if (cmd == Cmd.REQUEST.code()) {
             TaskFrame<DownloadTask> frame = data.getContent();
-
             DownloadTask data1 = frame.getData();
             String name = frame.getTarget();
             //使用线程池处理任务
             getExecutor().execute(() -> {
                 //代理执行方法
                 RpcInvokeProxy.invoke(ret -> {
+                    FinishNotify finishNotify;
+                    finishNotify.finish(666,"666");
                     //返回数据
-                    Frame<Object> resp = new Frame<>();
-                    resp.setData(ret);
+                    Frame<Object> resp0 = new Frame<>();
+                    TaskFrame<DownloadTask> resp = new TaskFrame<>();
+                    resp.setData((DownloadTask) ret);
                     writeAndFlush(ctx.channel(), resp, Cmd.RESPONSE);
                 }, name, frame.getData());
             });
         } else {
-           ctx.fireChannelRead(data);
+            ctx.fireChannelRead(data);
         }
     }
 }
