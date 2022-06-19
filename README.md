@@ -26,6 +26,47 @@ nacos_mq分支：基于nacos和rabitmq的分布式下载器(已完成)
 ### RPC版本
 架构图的在线地址：https://www.processon.com/view/link/61e5236563768906b3e9a052
 
+### 最近更新
+
+
+### 调用远程服务足够简单(类似于feign)
+
+#### 底层原理：
+- 将被@RpcClient修饰的接口，通过动态代理生成可以自动netty数据的bean，并注入到springIOC容器中
+- 通过获取bean，并执行bean方法时，将会触发增强的代理bean，并将方法的名称和参数通过netty发送给目标
+- 目标类获取RPC信息后，通过反射在容器中找到目标方法并执行
+```java
+//例子：服务A调用服务B的register方法
+//服务A
+//远程服务接口
+@RpcClient("ServiceB")
+public interface ServiceB {
+    void register(BasicFrame<Object> frame);
+}
+
+class Test {
+    //或者通过@Autowired
+    @Autowired
+    private ServiceB serviceb;
+
+    //使用远程服务
+    public void test() {
+      serviceb.register(new BasicFrame());
+    }
+}
+//服务B
+//远程目标方法
+@RpcComponent("ServiceB")
+public class ServiceB {
+    @RpcHandler("register")
+    public void register(BasicFrame<Object> frame) {
+        //打印BasicFrame数据
+        log.info(frame);
+    }
+}
+
+```
+
 #### 技术点
 
 
