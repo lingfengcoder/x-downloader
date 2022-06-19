@@ -1,5 +1,6 @@
 package com.lingfeng.biz.downloader;
 
+import com.lingfeng.rpc.ann.EnableRpcClient;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;

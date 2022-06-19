@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.callback.api;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 
 /**
  * @Author: wz
@@ -10,5 +10,5 @@ import com.lingfeng.biz.downloader.model.DownloadTask;
 @FunctionalInterface
 public interface CancelNotify {
     //取消下载成功
-    void cancelSuccess(DownloadTask task);
+    void cancelSuccess(DTask task);
 }

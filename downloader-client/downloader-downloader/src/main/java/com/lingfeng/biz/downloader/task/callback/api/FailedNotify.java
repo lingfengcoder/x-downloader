@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.callback.api;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 
 /**
  * @Author: wz
@@ -10,5 +10,5 @@ import com.lingfeng.biz.downloader.model.DownloadTask;
 @FunctionalInterface
 public interface FailedNotify {
     //下载完成
-    void failed(DownloadTask task, String msg);
+    void failed(DTask task, String msg);
 }

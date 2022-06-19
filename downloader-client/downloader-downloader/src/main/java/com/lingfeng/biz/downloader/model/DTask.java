@@ -18,7 +18,7 @@ import java.util.Objects;
 @Getter
 @Accessors(chain = true)
 @ToString
-public class DownloadTask implements Comparable<DownloadTask> {
+public class DTask implements Comparable<DTask> {
     //任务id
     private String taskId;
     //下载节点id(当前下载节点的nacosId)
@@ -44,7 +44,7 @@ public class DownloadTask implements Comparable<DownloadTask> {
 
     @Override
     //设置优先级
-    public int compareTo(DownloadTask t) {
+    public int compareTo(DTask t) {
         return t.getPriority() - this.getPriority();
     }
 
@@ -52,7 +52,7 @@ public class DownloadTask implements Comparable<DownloadTask> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DownloadTask task = (DownloadTask) o;
+        DTask task = (DTask) o;
         return Objects.equals(taskId, task.taskId);
     }
 

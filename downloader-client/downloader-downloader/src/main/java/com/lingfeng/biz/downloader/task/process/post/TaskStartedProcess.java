@@ -1,7 +1,7 @@
 package com.lingfeng.biz.downloader.task.process.post;
 
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.model.resp.DownloadNotifyResp;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskStartedProcess extends AbsolutePostProcess {
     @Override
-    public DownloadNotifyResp handler(DownloadTask t, boolean doNotify) {
+    public DownloadNotifyResp handler(DTask t, boolean doNotify) {
        // FileTask fileTask = t.getFileTask();
        // String notifyUrl = fileTask.getNotifyUrl();
         //生成回调数据

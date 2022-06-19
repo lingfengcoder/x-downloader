@@ -22,7 +22,7 @@ public class FtpPostProcess extends AbsolutePostProcess {
 
     @Override
     //下载成功的回调通知处理器
-    public DownloadNotifyResp handler(DownloadTask t, boolean doNotify) {
+    public DownloadNotifyResp handler(DTask t, boolean doNotify) {
         if (t == null) return null;
         //下载成功
         log.info("下载后置处理器 开始处理");

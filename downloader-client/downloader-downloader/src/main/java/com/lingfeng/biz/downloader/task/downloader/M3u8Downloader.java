@@ -35,12 +35,12 @@ public class M3u8Downloader extends AbstractDownloader {
     }
 
     @Override
-    public boolean download(DownloadTask task) {
+    public boolean download(DTask task) {
         downloadM3u8(task);
         return true;
     }
 
-    private boolean downloadM3u8(DownloadTask task) {
+    private boolean downloadM3u8(DTask task) {
         FileTask realTask = task.getFileTask();
         realTask.setStartTime(new Date());
         String targetUrl = realTask.getTargetUrl();

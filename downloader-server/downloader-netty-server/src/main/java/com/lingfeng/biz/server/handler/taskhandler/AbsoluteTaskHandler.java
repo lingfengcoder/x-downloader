@@ -5,11 +5,16 @@ import com.lingfeng.biz.downloader.model.DownloadTask;
 import com.lingfeng.biz.downloader.model.NodeRemain;
 import com.lingfeng.biz.downloader.model.QueueInfo;
 import com.lingfeng.biz.downloader.model.RouteResult;
+import com.lingfeng.biz.server.DownloaderServer;
 import com.lingfeng.biz.server.cache.CacheManage;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.client.NodeClientGroup;
+import com.lingfeng.biz.server.clientapi.ClientApi;
 import com.lingfeng.biz.server.model.NodeClient;
 import com.lingfeng.biz.server.route.Router;
+import com.lingfeng.rpc.invoke.RemoteInvoke;
+import com.lingfeng.rpc.server.nettyserver.BizNettyServer;
+import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -156,8 +161,15 @@ public abstract class AbsoluteTaskHandler implements TaskHandler {
     // todo 这里需要重构，形成一个基于发送队列的生产者消费者发送模型(支持重试)，不能简单的直接使用线程池处理
     private void sendTask(DownloadTask task, NodeClient client, final CountDownLatch latch) {
         try {
+            BizNettyServer server = DownloaderServer.getInstance();
+            Channel channel = client.getChannel();
+
+            RemoteInvoke invoke = RemoteInvoke.getInstance(server, channel);
+            ClientApi clientApi = invoke.getBean(ClientApi.class);
+            //执行远程方法
+            clientApi.listenTask(task);
             //发送任务
-            SendApi.sendTaskToClient(client, task);
+            //SendApi.sendTaskToClient(client, task);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {

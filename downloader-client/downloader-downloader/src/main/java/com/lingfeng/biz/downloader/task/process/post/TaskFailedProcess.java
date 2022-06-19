@@ -2,7 +2,7 @@ package com.lingfeng.biz.downloader.task.process.post;
 
 import com.lingfeng.biz.downloader.config.NodeConfig;
 import com.lingfeng.biz.downloader.enums.TaskStatus;
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.model.Downloading;
 import com.lingfeng.biz.downloader.model.FileTask;
 
@@ -22,7 +22,7 @@ public class TaskFailedProcess extends AbsolutePostProcess {
     @Autowired
     private NodeConfig nodeConfig;
 
-    public DownloadNotifyResp handler(DownloadTask t, boolean retry) {
+    public DownloadNotifyResp handler(DTask t, boolean retry) {
         //下载失败
         FileTask tmp = t.getFileTask();
         tmp.setStatus(TaskStatus.FAIL.getCode());

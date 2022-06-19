@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.multiplyhandler;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -20,9 +20,9 @@ public class Test {
     public static void main(String[] args) {
         DemoMultiplyTaskHandler handler = new DemoMultiplyTaskHandler();
         int x = 1000;
-        List<DownloadTask> data = new ArrayList<>();
+        List<DTask> data = new ArrayList<>();
         for (int i = 0; i < x; i++) {
-            data.add(new DownloadTask().setTaskId(i + ""));
+            data.add(new DTask().setTaskId(i + ""));
         }
 
 
@@ -51,8 +51,8 @@ public class Test {
         }).start();
 
 
-        Iterator<DownloadTask> iterator = data.iterator();
-        DownloadTask next = null;
+        Iterator<DTask> iterator = data.iterator();
+        DTask next = null;
         while (iterator.hasNext()) {
             if (next == null) {
                 next = iterator.next();

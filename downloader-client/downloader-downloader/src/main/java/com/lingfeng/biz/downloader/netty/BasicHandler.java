@@ -1,17 +1,14 @@
 package com.lingfeng.biz.downloader.netty;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.lingfeng.biz.downloader.NettyRpcClient;
 import com.lingfeng.biz.downloader.model.BasicCmd;
 import com.lingfeng.biz.downloader.model.BasicFrame;
 import com.lingfeng.biz.downloader.netty.serverapi.RegisterAction;
 import com.lingfeng.rpc.client.handler.AbsClientHandler;
-import com.lingfeng.rpc.client.nettyclient.BizNettyClient;
-import com.lingfeng.rpc.client.nettyclient.NettyClient;
 import com.lingfeng.rpc.constant.Cmd;
 import com.lingfeng.rpc.frame.SafeFrame;
-import com.lingfeng.rpc.invoke.ProxySender;
 import com.lingfeng.rpc.invoke.RemoteInvoke;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,25 +40,23 @@ public class BasicHandler extends AbsClientHandler<SafeFrame<BasicFrame<?>>> {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        register();
         super.channelActive(ctx);
-        // register();
     }
 
     //注册客户端到服务端
     public void register() {
         log.info("do register========================================");
         NettyRpcClient client = NettyRpcClient.getInstance();
-        BizNettyClient nettyClient = client.getNettyClient();
-        Channel channel = nettyClient.getChannel();
         String clientId = client.getClientId();
         //注册帧
         BasicFrame<Object> frame = BasicFrame.builder()
                 .cmd(BasicCmd.REG)
                 .clientId(clientId)
                 .build();
-        RemoteInvoke instance = RemoteInvoke.getInstance(nettyClient, channel);
+        //RemoteInvoke instance = RemoteInvoke.getInstance();
         //像调用本地方法一样，调用远程服务方法
-        RegisterAction proxy = instance.getDynamicProxy(RegisterAction.class);
+        RegisterAction proxy = SpringUtil.getBean(RegisterAction.class);
         int x = 2;
         for (int i = 0; i < x; i++) {
             proxy.register(frame);

@@ -2,7 +2,7 @@ package com.lingfeng.biz.downloader.task.multiplyhandler;
 
 
 import cn.hutool.core.thread.ThreadFactoryBuilder;
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Description: 多任务处理器
  */
 @Slf4j
-public class DemoMultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> {
+public class DemoMultiplyTaskHandler extends AbstractMultiplyTaskPool<DTask> {
     //此处由于多个下载器是共享的 多任务处理器 所以在没有给各自分配 队列限制前，队列和锁也必须共享
     private final static ReentrantLock lock = new ReentrantLock();
     private final static ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -52,7 +52,7 @@ public class DemoMultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTa
 
 
     @Override
-    protected boolean doWork(DownloadTask task) {
+    protected boolean doWork(DTask task) {
         log.info("taskId={} 开始执行", task.getTaskId());
         try {
             TimeUnit.SECONDS.sleep(4);

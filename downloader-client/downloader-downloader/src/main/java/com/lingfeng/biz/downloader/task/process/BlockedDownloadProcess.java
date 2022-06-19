@@ -1,7 +1,7 @@
 package com.lingfeng.biz.downloader.task.process;
 
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.model.FileTask;
 import com.lingfeng.biz.downloader.model.resp.DownloadNotifyResp;
 import com.lingfeng.biz.downloader.task.downloader.AbstractDownloader;
@@ -37,9 +37,9 @@ public class BlockedDownloadProcess {
     //同步下载m3u8 不干扰内部下载线程，采用调用者的线程进行下载
     public DownloadNotifyResp download(FileTask fileTask) {
         //创建下载任务
-        DownloadTask task = AbstractDownloader.generalTask(fileTask);
+        DTask task = AbstractDownloader.generalTask(fileTask);
         //选择下载器进行下载
-        Downloader<DownloadTask> downloader = AbstractDownloader.selectDownloader(task);
+        Downloader<DTask> downloader = AbstractDownloader.selectDownloader(task);
         //任务完成ack 此处的ack可以有很多种处理
         // 1.只要下载到本地完毕就ack 2.不仅下载完毕，而且后置处理都处理完毕
         assert downloader != null;

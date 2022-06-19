@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.callback.api;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 
 /**
  * @Author: wz
@@ -10,5 +10,5 @@ import com.lingfeng.biz.downloader.model.DownloadTask;
 @FunctionalInterface
 public interface FinishedNotify {
     //取消下载成功
-    void finish(DownloadTask task);
+    void finish(DTask task);
 }

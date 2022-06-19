@@ -1,8 +1,12 @@
 package com.lingfeng.biz.downloader.task.downloader;
 
 import cn.hutool.extra.spring.SpringUtil;
-import com.lingfeng.biz.downloader.model.*;
-import com.lingfeng.biz.downloader.task.callback.api.*;
+
+import com.lingfeng.biz.downloader.model.DownloadStatus;
+import com.lingfeng.biz.downloader.model.DTask;
+import com.lingfeng.biz.downloader.model.FileTask;
+import com.lingfeng.biz.downloader.model.M3u8;
+import com.lingfeng.biz.downloader.task.callback.api.TaskNotify;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -17,13 +21,13 @@ import static com.lingfeng.biz.downloader.constant.DownloadConstant.HTTP;
  * @Description:
  */
 @Slf4j
-public abstract class AbstractDownloader implements Downloader<DownloadTask> {
+public abstract class AbstractDownloader implements Downloader<DTask> {
 
     //下载开始通知
     protected abstract TaskNotify getNotify();
 
     @Override//前置处理器
-    public void preHandler(DownloadTask task) {
+    public void preHandler(DTask task) {
         try {
             if (task == null) return;
             task.setStartTime(new Date());
@@ -42,7 +46,7 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
     }
 
     @Override //后置处理器
-    public void postHandler(DownloadTask task) {
+    public void postHandler(DTask task) {
         try {
             TaskNotify notify = getNotify();
             if (notify != null) {
@@ -65,13 +69,13 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
     }
 
     @Override
-    public DownloadTask selectTask(DownloadTask task) {
+    public DTask selectTask(DTask task) {
         return null;
     }
 
-    public static DownloadTask generalTask(FileTask fileTask) {
+    public static DTask generalTask(FileTask fileTask) {
         //设置任务id
-        return new DownloadTask()
+        return new DTask()
                 //设置任务id
                 .setTaskId(UUID.randomUUID().toString())
                 .setFileTask(fileTask)
@@ -80,7 +84,7 @@ public abstract class AbstractDownloader implements Downloader<DownloadTask> {
 
 
     //选择下载器
-    public static Downloader<DownloadTask> selectDownloader(DownloadTask task) {
+    public static Downloader<DTask> selectDownloader(DTask task) {
         FileTask fileTask = task.getFileTask();
         //如果是m3u8文件 则进行m3u8文件下载
         boolean isM3u8 = M3u8.isM3u8Url(fileTask.getSourceUrl());

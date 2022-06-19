@@ -11,6 +11,7 @@ import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Auther: wz
@@ -18,7 +19,7 @@ import java.lang.ref.WeakReference;
  * @Description:
  */
 @Slf4j
-@RpcComponent
+@RpcComponent("registerAction")
 public class RegisterAction {
 
     @RpcHandler("register")
@@ -48,5 +49,13 @@ public class RegisterAction {
                 clientStore.removeNodeClient(clientId);
                 break;
         }
+    }
+
+    @RpcHandler("test")
+    public void test(ConcurrentHashMap<String, Integer> map) {
+        //执行
+        log.info("[BEAN]:registerAction  [METHOD]: test execute");
+        log.info("test get 复杂参数类型: {}", map.getClass());
+        log.info("test get 复杂参数数值: {}", map);
     }
 }

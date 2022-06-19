@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.callback;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.task.callback.api.TaskNotify;
 
 
@@ -12,11 +12,11 @@ import com.lingfeng.biz.downloader.task.callback.api.TaskNotify;
 public abstract class TaskAbsoluteNotify implements TaskNotify {
 
     @Override
-    public void cancelSuccess(DownloadTask task) {
+    public void cancelSuccess(DTask task) {
     }
 
     @Override
-    public void start(DownloadTask task) {
+    public void start(DTask task) {
 
     }
 

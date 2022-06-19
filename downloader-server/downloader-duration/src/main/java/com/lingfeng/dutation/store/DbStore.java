@@ -49,7 +49,7 @@ public class DbStore implements StoreApi<DownloadTask> {
             if (!tmpList.isEmpty()) {
                 //将任务改为处理中
                 List<Integer> ids = tmpList.stream().map(DownloadTask::getId).collect(Collectors.toList());
-                DownloadTask tmpPo = DownloadTask.builder().status(tarState).build();
+                DownloadTask tmpPo = new DownloadTask().setStatus(tarState);
                 LambdaUpdateWrapper<DownloadTask> updateWrapper = new LambdaUpdateWrapper<>();
                 updateWrapper.in(DownloadTask::getId, ids);
                 downloadTaskMapper.update(tmpPo, updateWrapper);
@@ -60,13 +60,13 @@ public class DbStore implements StoreApi<DownloadTask> {
 
     @Override
     public boolean updateById(DownloadTask task) {
-        DownloadTask build = DownloadTask.builder()
-                .id(task.getId())
-                .status(task.getStatus())
-                .updateTime(new Date())
-                .redoCount(task.getRedoCount())
-                .build();
-        return downloadTaskMapper.updateById(build) > 0;
+        DownloadTask downloadTask = new DownloadTask();
+        downloadTask
+                .setId(task.getId())
+                .setStatus(task.getStatus())
+                .setUpdateTime(new Date())
+                .setRedoCount(task.getRedoCount());
+        return downloadTaskMapper.updateById(downloadTask) > 0;
     }
 
 

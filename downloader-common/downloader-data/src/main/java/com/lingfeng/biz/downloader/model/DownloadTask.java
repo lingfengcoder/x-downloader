@@ -1,8 +1,7 @@
 package com.lingfeng.biz.downloader.model;
 
-
-import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -10,16 +9,16 @@ import java.util.Date;
 
 /**
  * 任务表
- *com.lingfeng.biz.downloader.model.DownloadTask
+ * com.lingfeng.biz.downloader.model.DownloadTask
+ *
  * @author wz
  * @date 2022-05-19 13:55:19
  */
 @Data
 @Accessors(chain = true)
-@Builder
+@NoArgsConstructor
 public class DownloadTask implements Comparable<DownloadTask>, Serializable {
 
-    private static final long serialVersionUID = 1L;
 
     private Integer id;
     /**

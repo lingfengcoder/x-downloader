@@ -44,12 +44,12 @@ public class FtpDownloader extends AbstractDownloader {
      * @date: 2021/10/27 20:58
      */
     @Override
-    public boolean download(DownloadTask task) {
+    public boolean download(DTask task) {
         matchAndDownload(task);
         return true;
     }
 
-    private DownloadTask matchAndDownload(DownloadTask task) {
+    private DTask matchAndDownload(DTask task) {
         FileTask realTask = task.getFileTask();
         try {
             //默认下载成功

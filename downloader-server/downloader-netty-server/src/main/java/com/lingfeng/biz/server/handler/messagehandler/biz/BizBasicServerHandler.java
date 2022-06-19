@@ -66,9 +66,11 @@ public class BizBasicServerHandler extends AbsServerHandler<SafeFrame<RpcInvokeF
         String channelId = ctx.channel().id().asLongText();
         NodeClientGroup clientStore = NodeClientGroup.getInstance();
         NodeClient client = clientStore.getClientByChannelId(channelId);
-        //设置关闭状态
-        client.setAlive(false);
-        client.setModifyTime(System.currentTimeMillis());
+        if (client != null) {
+            //设置关闭状态
+            client.setAlive(false);
+            client.setModifyTime(System.currentTimeMillis());
+        }
         //剔除客户端 //todo 由后台线程去剔除超时未上线的客户端，并且处理路由器中的任务，是否可以将任务再次分配
         // clientStore.removeNodeClientByChannelId(channelId);
         super.channelInactive(ctx);

@@ -3,7 +3,6 @@ package com.lingfeng.biz.server.handler.taskhandler;
 
 
 import com.lingfeng.biz.downloader.model.DownloadTask;
-import com.lingfeng.biz.downloader.model.MsgTask;
 import com.lingfeng.biz.server.DownloaderServer;
 import com.lingfeng.biz.server.cache.WaterCacheQueue;
 import com.lingfeng.biz.server.config.DispatcherConfig;
@@ -16,9 +15,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 

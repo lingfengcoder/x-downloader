@@ -1,6 +1,6 @@
 package com.lingfeng.biz.downloader.task.callback;
 
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.task.process.post.TaskFailedProcess;
 import com.lingfeng.biz.downloader.task.process.post.TaskFinishedProcess;
 import com.lingfeng.biz.downloader.task.process.post.FtpPostProcess;
@@ -25,22 +25,22 @@ public class FtpTaskNotify extends TaskAbsoluteNotify {
     private TaskFinishedProcess taskFinishedProcess;
 
     @Override
-    public void start(DownloadTask task) {
+    public void start(DTask task) {
         taskStartedProcess.handler(task, true);
     }
 
     @Override
-    public void success(DownloadTask task) {
+    public void success(DTask task) {
         ftpPostProcess.handler(task, true);
     }
 
     @Override
-    public void failed(DownloadTask task, String msg) {
+    public void failed(DTask task, String msg) {
         taskFailedProcess.handler(task, true);
     }
 
     @Override
-    public void finish(DownloadTask task) {
+    public void finish(DTask task) {
         taskFinishedProcess.handler(task, false);
     }
 }

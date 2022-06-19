@@ -22,7 +22,7 @@ public class M3u8PostProcess extends AbsolutePostProcess {
 
     //m3u8下载回调处理器
     @Override
-    public DownloadNotifyResp handler(DownloadTask t, boolean doNotify) {
+    public DownloadNotifyResp handler(DTask t, boolean doNotify) {
         if (t == null) return null;
         //下载成功
         FileTask tmp = t.getFileTask();

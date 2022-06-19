@@ -11,7 +11,6 @@ import com.lingfeng.biz.downloader.model.resp.R;
 import com.lingfeng.biz.downloader.callback.DelayQueueManager;
 import com.lingfeng.biz.downloader.util.AuthorityUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -25,7 +24,7 @@ import java.math.RoundingMode;
 @Slf4j
 public abstract class AbsolutePostProcess {
     //处理方法
-    public abstract DownloadNotifyResp handler(DownloadTask t, boolean doNotify);
+    public abstract DownloadNotifyResp handler(DTask t, boolean doNotify);
 
    // @Autowired
     protected NodeConfig config;
@@ -35,7 +34,7 @@ public abstract class AbsolutePostProcess {
     private DelayQueueManager delayQueueManager;
 
     //生成回调数据
-    protected DownloadNotifyResp generalNotifyResp(DownloadTask task) {
+    protected DownloadNotifyResp generalNotifyResp(DTask task) {
         FileTask fileTask = task.getFileTask();
         return new DownloadNotifyResp().setFileCode(fileTask.getFileCode())
                 .setSourceUrl(fileTask.getSourceUrl())

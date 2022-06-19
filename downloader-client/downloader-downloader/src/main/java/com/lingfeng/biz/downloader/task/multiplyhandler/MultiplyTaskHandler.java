@@ -2,7 +2,7 @@ package com.lingfeng.biz.downloader.task.multiplyhandler;
 
 
 import com.lingfeng.biz.downloader.config.NodeConfig;
-import com.lingfeng.biz.downloader.model.DownloadTask;
+import com.lingfeng.biz.downloader.model.DTask;
 import com.lingfeng.biz.downloader.task.downloader.AbstractDownloader;
 import com.lingfeng.biz.downloader.task.downloader.Downloader;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 @Component
-public class MultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> {
+public class MultiplyTaskHandler extends AbstractMultiplyTaskPool<DTask> {
     //此处由于多个下载器是共享的 多任务处理器 所以在没有给各自分配 队列限制前，队列和锁也必须共享
     private final static ReentrantLock lock = new ReentrantLock();
 
@@ -44,12 +44,12 @@ public class MultiplyTaskHandler extends AbstractMultiplyTaskPool<DownloadTask> 
 
 
     @Override
-    protected boolean doWork(DownloadTask task) {
+    protected boolean doWork(DTask task) {
         if (task == null) {
             return false;
         }
         //选择下载器
-        Downloader<DownloadTask> downloader = AbstractDownloader.selectDownloader(task);
+        Downloader<DTask> downloader = AbstractDownloader.selectDownloader(task);
         assert downloader != null;
         downloader.preHandler(task);
         try {

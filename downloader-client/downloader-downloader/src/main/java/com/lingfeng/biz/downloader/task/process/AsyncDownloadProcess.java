@@ -46,7 +46,7 @@ public class AsyncDownloadProcess {
     //下载任务处理器
     private boolean downloadProcess(FileTask fileTask) {
         //创建下载任务
-        DownloadTask task = AbstractDownloader.generalTask(fileTask);
+        DTask task = AbstractDownloader.generalTask(fileTask);
         //任务执行完毕的 对消息进行ack的回调方法
         //note task.setCallback(t -> listener.ackTask(msgTask));
         //设置后置处理器

@@ -48,7 +48,7 @@ public class NettyReqHandler extends AbsClientHandler<SafeFrame<TaskFrame<Downlo
                     TaskFrame<DownloadTask> resp = new TaskFrame<>();
                     resp.setData((DownloadTask) ret);
                     writeAndFlush(ctx.channel(), resp, Cmd.RESPONSE);
-                }, name, frame.getData());
+                }, "", name, frame.getData());
             });
         } else {
             ctx.fireChannelRead(data);
