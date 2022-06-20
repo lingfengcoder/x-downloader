@@ -10,12 +10,14 @@ import com.lingfeng.rpc.client.nettyclient.BizNettyClient;
 import com.lingfeng.rpc.client.nettyclient.NettyClientFactory;
 import com.lingfeng.rpc.handler.SpringClientProxyInvokeHandler;
 import com.lingfeng.rpc.model.Address;
+import com.lingfeng.rpc.proxy.handler.RpcClientProxyHandler;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +76,12 @@ public class NettyRpcClient {
             data.put("2", 22);
             data.put("13", 1313);
             data.put("4", 44);
-            registerAction.test(data);
+            //设置同步阻塞模式
+            RpcClientProxyHandler.setBlockModel();
+            long begin = System.currentTimeMillis();
+
+            Map<String, Integer> test = registerAction.test(data, 5000);
+            log.info("thread={} 获取到test方法的返回数据：{} 耗时：{}", Thread.currentThread(), test, (System.currentTimeMillis() - begin));
         }).start();
     }
 

@@ -27,7 +27,7 @@ public class RpcDemoHandler {
     }
 
     @RpcHandler("testDownloadTask")
-    public Object testDownloadTask(DownloadTask frame) {
+    public Object testDownloadTask(DownloadTask frame) throws InterruptedException {
         log.info("testDownloadTask get DownloadTask={}", frame);
         log.info("testDownloadTask get DownloadTask={}", frame);
         log.info("testDownloadTask get DownloadTask={}", frame);

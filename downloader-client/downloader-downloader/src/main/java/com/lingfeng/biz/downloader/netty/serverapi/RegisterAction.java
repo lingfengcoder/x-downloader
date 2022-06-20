@@ -4,6 +4,7 @@ import com.lingfeng.biz.downloader.model.BasicFrame;
 import com.lingfeng.rpc.ann.RpcClient;
 
 import javax.annotation.PostConstruct;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -15,5 +16,5 @@ import java.util.concurrent.ConcurrentHashMap;
 public interface RegisterAction {
     void register(BasicFrame<Object> frame);
 
-    void test(ConcurrentHashMap<String, Integer> map);
+    Map<String, Integer> test(ConcurrentHashMap<String, Integer> map, long timeout);
 }

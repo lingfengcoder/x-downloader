@@ -1,5 +1,6 @@
 package com.lingfeng.biz.server.action;
 
+import cn.hutool.core.util.RandomUtil;
 import com.lingfeng.biz.downloader.model.BasicCmd;
 import com.lingfeng.biz.downloader.model.BasicFrame;
 import com.lingfeng.biz.server.client.NodeClientGroup;
@@ -11,6 +12,7 @@ import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -52,10 +54,13 @@ public class RegisterAction {
     }
 
     @RpcHandler("test")
-    public void test(ConcurrentHashMap<String, Integer> map) {
+    public Map<String, Integer> test(ConcurrentHashMap<String, Integer> map, long timeout) throws InterruptedException {
         //执行
         log.info("[BEAN]:registerAction  [METHOD]: test execute");
         log.info("test get 复杂参数类型: {}", map.getClass());
         log.info("test get 复杂参数数值: {}", map);
+        map.put("bbq", RandomUtil.randomInt(1000));
+        Thread.sleep(timeout);
+        return map;
     }
 }
