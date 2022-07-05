@@ -1,6 +1,7 @@
 package com.lingfeng.biz.downloader.config;
 
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;

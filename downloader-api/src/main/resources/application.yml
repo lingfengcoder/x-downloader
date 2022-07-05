@@ -4,6 +4,9 @@ spring:
     name: download-api
   profiles:
     active: dev
+  output:
+    ansi:
+      enabled: ALWAYS
 #  main:
 #    allow-bean-definition-overriding: true
 # log config

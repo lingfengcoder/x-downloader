@@ -1,7 +1,9 @@
 package com.lingfeng.biz.downloader;
 
+import com.lingfeng.biz.downloader.config.DemoConfig;
 import com.lingfeng.rpc.ann.EnableRpcClient;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,6 +22,7 @@ import java.net.InetAddress;
 @ComponentScan(basePackages = "com.lingfeng.**")
 @MapperScan("com.lingfeng.dutation.store")
 public class DownloaderApplication implements CommandLineRunner {
+
 
 
     public static void main(String[] args) {

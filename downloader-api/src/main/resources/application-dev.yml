@@ -20,3 +20,10 @@ spring:
       connection-timeout: 10000
       connection-test-query: SELECT 1
       validation-timeout: 1000
+
+
+  main:
+    allow-circular-references: true
+biz:
+  name: wz
+  age: 27

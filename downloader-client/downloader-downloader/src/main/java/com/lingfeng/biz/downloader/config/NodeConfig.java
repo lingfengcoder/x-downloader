@@ -29,8 +29,8 @@ import java.util.Properties;
  */
 @Getter
 @Setter
-@Configuration
 @Order(1)
+@Configuration
 //@Accessors(fluent = true)
 //@NacosPropertySource(dataId = "biz-downloader-dev.yaml", groupId = "biz", autoRefreshed = true)
 //@RefreshScope//动态刷新bean
